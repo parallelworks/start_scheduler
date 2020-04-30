@@ -1,0 +1,20 @@
+<tool id='gtdemo_start_scheduler_v7' name='gtdemo_start_scheduler_v7'>
+  <command interpreter='parsl'>main.py</command>
+  <inputs>
+    <section name='required_info' type='section' title='Required Info' expanded='true'>
+      <param name='license' label='License' type='text' value='27006@license.parallel.works' help='Choose the executor license' width='50%'>
+      </param>
+      <param name='executor_pools' type='select' label='Select Executor Pools' width='100%' help='Select executor pools to run GT packets. If more than one pool is selected the smart pool selector will distribute the load to the pools.' multiple='true'>
+      <option value="gtexecutor_2vcpu" selected="true">gtexecutor_2vcpu</option>
+      <option value="gtexecutor_4vcpu" selected="true">gtexecutor_4vcpu</option>
+      <option value="gtexecutor_16vcpu" selected="true">gtexecutor_16vcpu</option>
+      </param>
+    </section>
+    <section name='advanced_info' type='section' conditional='[object Object]' title='Advanced Info' expanded='false'>
+      <param name='gt_user' label='GT user name' type='text' value='gtuser' help='GT_USER parameter in gtdistd file' width='50%'>
+      </param>
+    </section>
+  </inputs>
+  <outputs>
+  </outputs>
+</tool>
