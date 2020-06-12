@@ -1,0 +1,10 @@
+{
+    "GTsuiteMP": {
+        "licenses": 4,
+        "run_time": 500
+    },
+    "GTAutoLion": {
+        "licenses": 2,
+        "run_time": 2000
+    }
+}

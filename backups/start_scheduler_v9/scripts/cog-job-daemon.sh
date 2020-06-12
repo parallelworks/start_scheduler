@@ -12,7 +12,7 @@ secure_curl () {
     local curl_cmd=$1
     local out_file=$2
     while true; do
-	    ${curl_cmd} > ${out_file}.tmp && mv ${out_file}.tmp ${out_file}
+	    ${curl_cmd} > ${out_file}.tmp 2> /dev/null && mv ${out_file}.tmp ${out_file}
         if [ -f ${out_file} ]; then
             break
 	    else
@@ -36,6 +36,16 @@ echo "Scheduler IP:   ${sched_ip}"
 gtdistd=/etc/init.d/gtdistd
 sched_work_dir=/var/opt/gtsuite/gtdistd
 exec_work_dir=/var/opt/gtsuite/gtdistd
+
+# Return the scheduler to saved state
+mkdir -p ${sched_work_dir}
+host_instance=`hostname`
+disk_name=$(echo ${host_instance} | cut -d'-' -f2-3)
+disk_zone=$(echo ${host_instance} | cut -d'-' -f6-)
+gcloud compute instances attach-disk ${host_instance} --disk ${disk_name} --device-name ${disk_name} --zone ${disk_zone}
+mount /dev/disk/by-id/google-${disk_name} ${sched_work_dir}
+chmod 777 ${sched_work_dir} -R
+
 exec_prop_file=${sched_work_dir}/gtdistd-exec.properties
 sched_prop_file=${sched_work_dir}/gtdistd-sched.properties
 GT_VERSION_HOME=${GTIHOME}/v2019
@@ -43,8 +53,6 @@ GT_VERSION_HOME=${GTIHOME}/v2019
 # Clean jobs dir:
 #rm -rf ${sched_work_dir}/jobs/*
 rm -f /tmp/cjs.*
-mkdir -p ${sched_work_dir}
-chmod 777 ${sched_work_dir} -R
 
 # Prepare executor properties file
 cp ${pf_dir}/gtdistd-exec.properties ${exec_prop_file}
@@ -69,12 +77,22 @@ sed -i "s|^GT_USER.*|GT_USER=${GT_USER}|g" ${gtdistd}
 sed -i "s|^GT_CONF.*|GT_CONF=${sched_prop_file}|g" ${gtdistd}
 sed -i 's/\r//' ${gtdistd}
 
+
 # Start or restart gtdist daemon
 # Make sure user exists:
 if ! [ -d /home/${GT_USER} ]; then
     echo "Creating user account for user: ${GT_USER}"
     adduser ${GT_USER}
 fi
+
+# Start DB on node boot as GT_USER
+#${GTIHOME}/bin/gtcollect -V ${VERSION} dbstart ds
+#<call_to_solver>
+#${GTIHOME}/bin/gtcollect -V ${VERSION} dbstop ds
+#${GTIHOME}/bin/gtcollect dbstart
+su ${GT_USER} -c "${GTIHOME}/bin/gtcollect dbstart"
+
+
 # Make sure this user can write the gtdistd.out file
 touch /tmp/gtdistd.out
 chmod 777 /tmp/gtdistd.out

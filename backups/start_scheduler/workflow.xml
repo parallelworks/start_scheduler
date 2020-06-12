@@ -1,0 +1,19 @@
+<tool id='gtdemo_start_scheduler' name='gtdemo_start_scheduler'>
+  <command interpreter='parsl'>main.py</command>
+  <inputs>
+    <param name='casename' label='Case Name' type='text' value='CaseName' width='30%'>
+    </param>
+    <section name='sched_info' type='section' title='Scheduler Info' expanded='true'>
+      <param name='license' label='License' type='text' value='27006@license.parallel.works' help='Choose the executor license' width='50%'>
+      </param>
+      <param name='pool_name' label='Executors Pool Name' type='text' value='gtexecutor_xl' help='Enter the PW pool name to start executor VMs' width='50%'>
+      </param>
+      <param name='gt_user' label='GT User Name' type='text' value='jan_augste' help='Enter the PW pool name to start executor VMs' width='50%'>
+      </param>
+      <param name='ds_freq' label='Demand Sensor Frequency [s]' type='text' value='10' help='Frequency in seconds to sense and respond to packet demand' width='50%'>
+      </param>
+    </section>
+  </inputs>
+  <outputs>
+  </outputs>
+</tool>

@@ -1,0 +1,17 @@
+<tool id='gtdemo_start_scheduler_v7' name='gtdemo_start_scheduler_v7'>
+  <command interpreter='parsl'>main.py</command>
+  <inputs>
+    <section name='required_info' type='section' title='Required Info' expanded='true'>
+      <param name='license' label='License' type='text' value='27006@license.parallel.works' help='Choose the executor license' width='50%'>
+      </param>
+      <param name='pool_name' label='Executors pool name' type='text' value='gtexecutor_xl' help='Enter the PW pool name to start executor VMs' width='50%'>
+      </param>
+    </section>
+    <section name='advanced_info' type='section' conditional='[object Object]' title='Advanced Info' expanded='false'>
+      <param name='gt_user' label='GT user name' type='text' value='gtuser' help='GT_USER parameter in gtdistd file' width='50%'>
+      </param>
+    </section>
+  </inputs>
+  <outputs>
+  </outputs>
+</tool>
