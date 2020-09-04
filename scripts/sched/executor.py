@@ -1,3 +1,4 @@
+import math
 
 class AggregatedExecutor():
     def __init__(self, pool_info, pool_names, supply, allow_idle_cores = True):
@@ -19,7 +20,10 @@ class AggregatedExecutor():
                 pool["settings"]["max"] = 0
         # Sort pools by number of vcpus
         cpus_per_pool = [int(pool['info']['cpuPerWorker'])/2 for pool in exec_pools]
-        cpus_per_pool, indices = zip(*sorted(zip(cpus_per_pool, range(len(cpus_per_pool))), reverse = True))
+        if cpus_per_pool:
+            cpus_per_pool, indices = zip(*sorted(zip(cpus_per_pool, range(len(cpus_per_pool))), reverse = True))
+        else:
+            indices = []
         # Remove pools with duplicate number of vCPUs
         exec_pools = [exec_pools[i] for i in indices if cpus_per_pool[i] not in cpus_per_pool[:i]]
         return exec_pools
@@ -31,9 +35,10 @@ class AggregatedExecutor():
             core_supply += pool_cpus * self.supply[pool["name"]]
         return core_supply
 
-    def get_overdemand(self, core_demand):
+    def get_overdemand(self, core_demand, od_frac):
         core_supply = self.get_cores()
         overdemand = core_demand - core_supply
+        overdemand = math.ceil(overdemand * float(od_frac))
         pool_names = [p["name"] for p in self.pools]
         exec_overdemand = dict.fromkeys(pool_names, 0)
 
@@ -81,7 +86,6 @@ class AggregatedExecutor():
             # From small to large
             self.pools.reverse()
             for pool in self.pools:
-                print(pool)
                 if pool['settings']['max'] > self.supply[pool["name"]]:
                     pool_cpus = int(int(pool['info']['cpuPerWorker'])/2)
                     overdemand += - pool_cpus

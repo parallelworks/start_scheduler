@@ -1,25 +1,36 @@
-<tool id='gtdemo_start_scheduler_v11' name='gtdemo_start_scheduler_v11'>
+<tool id='alvarovidalto_start_scheduler' name='alvarovidalto_start_scheduler'>
   <command interpreter='parsl'>main.py</command>
   <inputs>
-    <section name='required_info' type='section' title='Required Info' expanded='true'>
-      <param name='executor_pools' type='select' label='Select Executor Pools' width='100%' help='Select executor pools to run GT packets. If more than one pool is selected the smart pool selector will distribute the load to the pools.' multiple='true'>
+    <section name='required_info' type='section' title='Required info' expanded='true'>
+      <param name='executor_pools' type='select' label='Select executor pools' width='100%' help='Select executor pools to run GT packets. If more than one pool is selected the smart pool selector will distribute the load to the pools.' multiple='true'>
         <option value="gtexec_2vcpu" selected="true">gtexec_2vcpu</option>
-        <option value="gtexec_4vcpu" selected="true">gtexec_4vcpu</option>
-        <option value="gtexec_8vcpu" selected="true">gtexec_8vcpu</option>
-        <option value="gtexec_16vcpu" selected="true">gtexec_16vcpu</option>
-        <option value="gtexec_32vcpu" selected="true">gtexec_32vcpu</option>
-        <option value="gtexec_64vcpu" selected="true">gtexec_64vcpu</option>
-        <option value="gtexec_96vcpu" selected="true">gtexec_96vcpu</option>
+<option value="gtexec_40vcpu">gtexec_40vcpu</option>
       </param>
-      <param name='license' label='License Server' type='text' value='27005@gt-license-server' help="License servers: port1@host1:port2@host2. On Windows, the separator is a semicolon." width='100%'>
+      <param name='cloud' type='select' label='Cloud platform' width='15%' help='Select ' multiple='false'>
+        <option value="AWS" selected="true">AWS</option>
+<option value="GCP">GCP</option>
+<option value="Azure">Azure</option>
+      </param>
+      <param name='gt_user' label='GT user name' type='text' value='ec2-user' help='GT_USER parameter in gtdistd file and linux user in scheduler VM' width='15%'>
+      </param>
+      <param name='version' type='select' label='GT version' width='15%' help='Select GT software version' multiple='false'>
+        <option value="v2020" selected="true">v2020</option>
+<option value="v2019">v2019</option>
+<option value="v2018">v2018</option>
+<option value="v2017">v2017</option>
+      </param>
+      <param name='license' label='License server' type='text' value='27005@gt-license-server' help='License servers: port1@host1:port2@host2. On Windows, the separator is a semicolon.' width='55%'>
       </param>
     </section>
-    <section name='advanced_info' type='section' conditional='[object Object]' title='Advanced Info' expanded='false'>
-      <param name='gt_user' label='GT user name' type='text' value='gtuser' help='GT_USER parameter in gtdistd file' width='50%'>
+    <section name='advanced_info' type='section' conditional='[object Object]' title='Advanced GT options' expanded='false'>
+      <param name='sum_serv' type='boolean' truevalue='Yes' falsevalue='No' checked='true' label='Activate job summary service' width='100%' float='right'>
       </param>
-      <conditional name="sum_serv_cond">
-        <param name="sum_serv" type="boolean" truevalue="Yes" falsevalue="No" checked="true" label="Enable Summary Service"  help='Summary service is a feature which outputs a summary of job attributes to a csv file upon a job finishing' width="50%" float="right"/>
-       </conditional>
+    </section>
+    <section name='scheduler' type='section' conditional='[object Object]' title='Advanced PW scheduler options' expanded='false'>
+      <param name='ds_cycle' label='Core demand sensing cycle duration [s]' type='text' value='30' help='Specify the cycle duration for sensing the core demand' width='50%'>
+      </param>
+      <param name='od_frac' label='Over demand satisfaction fraction [0,1]' type='text' value='0.5' help='Fraction of the core over demand to satisfy every cycle. If the value 1 is selected all the core over demand is satisfied in just one cycle. Select less than 1 if the packet runtime is much smaller than VM startup time.' width='50%'>
+      </param>
     </section>
   </inputs>
   <outputs>

@@ -20,9 +20,12 @@ version=$3
 VERSION=$(echo ${version} | sed "s/v//g")
 GT_USER=$4
 sum_serv=$5
-api_key=$6 #4c1bb8ff47a0f42b96ebb670dcb09418 (not a real API key)
-pf_dir=$7 # Properties files directory
-log_dir=$8
+ds_cycle=$6
+od_frac=$7
+api_key=$8 #4c1bb8ff47a0f42b96ebb670dcb09418 (not a real API key)
+pf_dir=$9 # Properties files directory
+log_dir=${10}
+cloud=${11}
 
 apps_dir=$(dirname $0)
 export GTIHOME=/opt/gtsuite
@@ -30,29 +33,48 @@ GT_VERSION_HOME=${GTIHOME}/${version}
 export GTISOFT_LICENSE_FILE=$1
 export PATH=${GTIHOME}/bin/:${PATH}
 export PATH=${GT_VERSION_HOME}/GTsuite/bin/linux_x86_64/:${PATH}
+export PATH=/opt/swift-bin/bin/:${PATH}
 export PATH=/opt/swift-pw-bin/swift-svn/bin/:${PATH}
+export PATH=/opt/bin/:${PATH}
+
 pw_http="http://beta.parallel.works"
 
-sched_ip=$(curl ifconfig.me)
-echo "Scheduler IP:   ${sched_ip}"
+sched_ip_ext=$(curl -s ifconfig.me) # FIXME: Get internal IP
+sched_ip_int=$(hostname -I  | cut -d' ' -f1 | sed "s/ //g")
+
+echo "Scheduler External IP:   ${sched_ip_ext}"
+echo "Scheduler Internal IP:   ${sched_ip_int}"
+
+ulimit -u
 
 # Directories / Files:
 sched_work_dir=/var/opt/gtsuite/
 exec_work_dir=/var/opt/gtsuite/
-mkdir -p ${sched_work_dir}/gtdistd ${sched_work_dir}/db ${sched_work_dir}/compounds
+
+# Attach and mount disk
+# - The ${sched_work_dir} directory should be empty before mounting the persistent disk
+sudo rm -rf ${sched_work_dir}
+sudo mkdir -p ${sched_work_dir}
+
+# FORMAT THE DISK BEFORE FIRST USE!
+dname=$(lsblk | tail -n1 | awk '{print $1}' | tr -cd '[:alnum:]._-')
+if [[ ${cloud} == "GCP" ]]; then
+    did=$(ls -1l /dev/disk/by-id/google-* | grep ${dname} | awk '{print $9}')
+    sudo mount -o discard,defaults ${did} ${sched_work_dir}
+elif [[ ${cloud} == "AWS" ]]; then
+    # ONLY FIRST TIME!
+    # sudo yum install xfsprogs
+    # sudo mkfs -t xfs /dev/xvdf
+    #dname=$(lsblk |  awk '$4 == "1G" {print $1}') # --> xvdf (if disk size is correct and unique)
+    sudo mount /dev/${dname} ${sched_work_dir}
+fi
 
 # Make sure user has permissions
 sudo chown ${GT_USER}: ${GTIHOME} -R
 chmod u+w ${GTIHOME} -R
 sudo chown ${GT_USER}: ${sched_work_dir} -R
 chmod u+w ${sched_work_dir} -R
-
-# Attach and mount disk
-host_instance=`hostname`
-disk_name=$(echo ${host_instance} | cut -d'-' -f2-3)
-disk_zone=$(echo ${host_instance} | cut -d'-' -f6-)
-gcloud compute instances attach-disk ${host_instance} --disk ${disk_name} --device-name ${disk_name} --zone ${disk_zone}
-sudo mount /dev/disk/by-id/google-${disk_name} ${sched_work_dir}
+mkdir -p ${sched_work_dir}/gtdistd ${sched_work_dir}/db ${sched_work_dir}/compounds
 
 exec_prop_file=${sched_work_dir}/gtdistd/gtdistd-exec.properties
 sched_prop_file=${sched_work_dir}/gtdistd/gtdistd-sched.properties
@@ -60,14 +82,14 @@ sched_prop_file=${sched_work_dir}/gtdistd/gtdistd-sched.properties
 # Prepare executor properties file (except core-count and priority)
 # cp ${GT_VERSION_HOME}/distributed/config-samples/gtdistd-exec.properties ${exec_prop_file}
 cp ${pf_dir}/gtdistd-exec-${version}.properties ${exec_prop_file}
-sed -i "s|GTDistributed.work-dir.*|GTDistributed.work-dir = ${exec_work_dir}|g" ${exec_prop_file}
-sed -i "s|GTDistributed.license-file.*|GTDistributed.license-file = ${GTISOFT_LICENSE_FILE}|g" ${exec_prop_file}
-sed -i "s|GTDistributed.client.hostname.*|GTDistributed.client.hostname = ${sched_ip}|g" ${exec_prop_file}
+sed -i "s|^GTDistributed.work-dir.*|GTDistributed.work-dir = ${exec_work_dir}/gtdistd|g" ${exec_prop_file}
+sed -i "s|^GTDistributed.license-file.*|GTDistributed.license-file = ${GTISOFT_LICENSE_FILE}|g" ${exec_prop_file}
+sed -i "s|^GTDistributed.client.hostname.*|GTDistributed.client.hostname = ${sched_ip_int}|g" ${exec_prop_file}
 sed -i 's/\r//' ${exec_prop_file}
 
 # Prepare scheduler properties file
 cp ${pf_dir}/gtdistd-sched-${version}.properties ${sched_prop_file}
-sed -i "s|GTDistributed.work-dir.*|GTDistributed.work-dir = ${sched_work_dir}/gtdistd|g" ${sched_prop_file}
+sed -i "s|^GTDistributed.work-dir.*|GTDistributed.work-dir = ${sched_work_dir}/gtdistd|g" ${sched_prop_file}
 if [[ ${sum_serv} == "True" ]]; then
     echo Activating summary service
     sed -i "s|GTDistributed.job-summary-service-enable.*|GTDistributed.job-summary-service-enable = true|g" ${sched_prop_file}
@@ -79,6 +101,8 @@ if ! [ -d /home/${GT_USER} ]; then
     echo "Creating user account for user: ${GT_USER}"
     adduser ${GT_USER}
 fi
+
+date >> ${sched_work_dir}/dates.txt
 
 # Start DB on node boot as GT_USER
 #${GTIHOME}/bin/gtcollect -V ${VERSION} dbstart
@@ -128,20 +152,19 @@ create_ms_input () {
     echo "exec_work_dir=${exec_work_dir}" >> ${ms_input}
     echo "gt_user=${GT_USER}" >> ${ms_input}
     echo "version=${version}" >> ${ms_input}
-    echo "sched_ip=${sched_ip}" >> ${ms_input}
     echo "pool_names=${exec_pools}" >> ${ms_input}
     echo "pool_info_json=pools_info.json" >> ${ms_input}
     echo "gtdist_exec_pfile=${exec_prop_file}" >> ${ms_input}
     echo "log_dir=${log_dir}" >> ${ms_input}
+    echo "od_frac=${od_frac}" >> ${ms_input}
+    echo "cloud"=${cloud} >> ${ms_input}
 }
 
 ms_input=main_input.txt
 while true; do
-    sleep 30
-    secure_curl "curl https://beta.parallel.works/api/resources?key=${api_key}" pools_info.json
-    secure_curl "curl http://${sched_ip}:8979/jobs/?xml" webapp.xml
-    # Try not to submit more cog-job-submit than the max_pool_capacity. Should not break anything
-    # but will waste time (executor.sh has a timeout)
+    sleep ${ds_cycle}
+    secure_curl "curl -s https://beta.parallel.works/api/resources?key=${api_key}" pools_info.json
+    secure_curl "curl -s http://${sched_ip_int}:8979/jobs/?xml" webapp.xml
     echo; date
     create_ms_input
     python3 ${apps_dir}/sched/main.py ${ms_input}

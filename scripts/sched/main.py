@@ -44,11 +44,12 @@ webapp_xml = inp_dict["webapp_xml"]
 sched_work_dir = inp_dict["sched_work_dir"]
 exec_work_dir = inp_dict["exec_work_dir"]
 gt_user = inp_dict["gt_user"]
-sched_ip = inp_dict["sched_ip"]
 pool_names = inp_dict["pool_names"]
 pool_info_json = inp_dict["pool_info_json"]
 gtdist_exec_pfile = inp_dict["gtdist_exec_pfile"]
 log_dir = inp_dict["log_dir"]
+od_frac = float(inp_dict["od_frac"])
+cloud = inp_dict["cloud"]
 
 if '---' in pool_names:
     pool_names = pool_names.split('---')
@@ -75,8 +76,8 @@ print(exec_supply)
 Executor = executor.AggregatedExecutor(pool_info, pool_names, exec_supply)
 
 # Calculate executor overdemand - Minimizing number of nodes
-exec_overdemand = Executor.get_overdemand(core_demand)
-print("Executor over demand:")
+exec_overdemand = Executor.get_overdemand(core_demand, od_frac)
+print("Executor demand (od_frac = {}):".format(str(od_frac)))
 print(exec_overdemand)
 
 # Get priorities for executors:
@@ -91,14 +92,14 @@ for pname,nworkers in exec_overdemand.items():
     service_url = pw_http + ":" + service_port
     for i in range(nworkers):
         exec_priority = str(Executor.priority[pname][i])
-        cmd = "/bin/bash {}/executor.sh {} {} {} {} {}".format(exec_work_dir, version, gt_user, sched_ip, str(cpe), exec_priority)
+        cmd = "/bin/bash {}/executor.sh {} {} {} {} {}".format(exec_work_dir, version, gt_user, str(cpe), exec_priority, cloud)
         # Run as gt_user
         cmd = "su {} -c \\\"{}\\\"".format(gt_user, cmd)
         stdout = exec_work_dir + "/executor.out"
         stderr = exec_work_dir + "/executor.err"
         cjs_cmd = cjs.get_cjs_cmd(cmd, service_url, inputs = inputs, rwd = exec_work_dir,  stdout = stdout, stderr = stderr, redirected = False)
         time.sleep(0.01)
-        print("Starting executor in pool {}".format(pname))
+        print("Submitting executor.sh job to pool {}".format(pname))
         cjs.Popen_cjs_cmd(cjs_cmd, pname)
 
 # Extra info for debugging

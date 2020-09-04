@@ -5,17 +5,20 @@ echo $@
 
 version=$1
 GT_USER=$2
-sched_ip=$3
-cpe=$4 # Cores per executor
-priority=$5 # Executor priority
+cpe=$3 # Cores per executor
+priority=$4 # Executor priority
+cloud=$5
 
 exec_work_dir=/var/opt/gtsuite
 exec_prop_file=${exec_work_dir}/gtdistd/gtdistd-exec.properties
 GTIHOME=/opt/gtsuite
 GT_VERSION_HOME=${GTIHOME}/${version}
 
-# Directories / Files:
-mkdir -p ${exec_work_dir}/gtdistd ${exec_work_dir}/db ${exec_work_dir}/compounds
+# Change hostname:
+if [[ ${cloud} == "AWS" ]]; then
+    source /tmp/tags # Reads the "name" tag
+    sudo hostnamectl set-hostname ${name}
+fi
 
 # Start or restart gtdist daemon
 # Make sure user home exists:
@@ -24,12 +27,15 @@ if ! [ -d /home/${GT_USER} ]; then
     adduser ${GT_USER}
 fi
 
-
 # Make sure user has permissions
 sudo chown ${GT_USER}: ${GTIHOME} -R
 chmod u+w ${GTIHOME} -R
 sudo chown ${GT_USER}: ${exec_work_dir} -R
 chmod u+w ${exec_work_dir} -R
+
+# Directories / Files:
+mkdir -p ${exec_work_dir}/gtdistd ${exec_work_dir}/db ${exec_work_dir}/compounds
+
 
 # Start DB on node boot: Neehar: "Do not use the ds"
 #${GTIHOME}/bin/gtcollect -V ${VERSION} dbstop
@@ -84,12 +90,13 @@ wp=10
 # Timeout period: cog-job will exit even if no sim file was found after tp seconds
 tp=300
 accu=0
+cpu_exit=0
 while true; do
     sleep ${wp}
     accu=$((accu + wp))
     date
     sim_counter=$(find ${exec_work_dir}/gtdistd -name **.sim | wc -l)
-    echo Running simulations: ${sim_counter}
+    echo "Running simulations: ${sim_counter}"
     if [ ${sim_counter} -eq 0 ]; then
         echo "No ongoing simulation was found"
         if ${sim_found}; then # There was a simulation
@@ -105,7 +112,18 @@ while true; do
     else
         sim_found=true
         exit_counter=0
-        echo "Ongoing simulations: ${sim_counter}"
+        cpu_usage=$(ps -eo %cpu --sort=-%cpu | awk 'FNR == 2 {print}' | awk '{print int($0)}')
+        echo "CPU usage of most demanding process: ${cpu_usage}"
+        if [ ${cpu_usage} -lt 15 ]; then
+            cpu_exit=$((cpu_exit + 1))
+            echo "${cpu_usage} < 15% --> CPU exit counter: ${cpu_exit}/50"
+            if [ ${cpu_exit} -gt 50 ]; then
+                sudo systemctl stop gtdistd.service
+                exit 0
+            fi
+        else
+            cpu_exit=0
+        fi
     fi
     if ! ${sim_found} && [ ${accu} -gt ${tp} ]; then
         echo "Exiting. No simulation was found after ${accu}>${tp} seconds"
