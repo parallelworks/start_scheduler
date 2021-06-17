@@ -4,15 +4,23 @@ echo "INPUTS:"
 echo $@
 
 version=$1
-GT_USER=$2
-cpe=$3 # Cores per executor
-priority=$4 # Executor priority
-cloud=$5
+cpe=$2 # Cores per executor
+priority=$3 # Executor priority
+cloud=$4
+sched_ip_int=$5
+lic_hostname=$6
 
 exec_work_dir=/var/opt/gtsuite
 exec_prop_file=${exec_work_dir}/gtdistd/gtdistd-exec.properties
 GTIHOME=/opt/gtsuite
 GT_VERSION_HOME=${GTIHOME}/${version}
+
+# ONLY IN THE EXECUTOR.sh
+# add a host pointer to internal IP of the scheduler
+cat /etc/hosts > hosts_mod
+sed -i "s|.*${lic_hostname}.*||g" hosts_mod
+echo "${sched_ip_int} ${lic_hostname}" >> hosts_mod
+sudo cp hosts_mod /etc/hosts
 
 # Change hostname:
 if [[ ${cloud} == "AWS" ]]; then
@@ -21,26 +29,26 @@ if [[ ${cloud} == "AWS" ]]; then
 fi
 
 # Start or restart gtdist daemon
-# Make sure user home exists:
-if ! [ -d /home/${GT_USER} ]; then
-    echo "Creating user account for user: ${GT_USER}"
-    adduser ${GT_USER}
-fi
-
 # Make sure user has permissions
-sudo chown ${GT_USER}: ${GTIHOME} -R
+sudo chown ${USER}: ${GTIHOME} -R
 chmod u+w ${GTIHOME} -R
-sudo chown ${GT_USER}: ${exec_work_dir} -R
+sudo chown ${USER}: ${exec_work_dir} -R
 chmod u+w ${exec_work_dir} -R
 
 # Directories / Files:
 mkdir -p ${exec_work_dir}/gtdistd ${exec_work_dir}/db ${exec_work_dir}/compounds
 
-
 # Start DB on node boot: Neehar: "Do not use the ds"
-#${GTIHOME}/bin/gtcollect -V ${VERSION} dbstop
-#${GTIHOME}/bin/gtcollect -V ${VERSION} dbstart
-${GTIHOME}/bin/gtcollect dbstart
+# VERSION=$(echo ${version} | sed "s/v//g")
+# ${GTIHOME}/bin/gtcollect -V ${VERSION} dbstop
+# ${GTIHOME}/bin/gtcollect -V ${VERSION} dbstart
+# ${GTIHOME}/bin/gtcollect dbstart
+# FIXME: Wont work after 2029
+for gtv in $(ls -d ${GTIHOME}/v202*); do
+    vn=$(basename ${gtv} | sed 's/v//g')
+    echo "${GTIHOME}/bin/gtcollect -V ${vn} dbstart"
+    ${GTIHOME}/bin/gtcollect -V ${vn} dbstart
+done
 
 # Make sure this user can write the gtdistd.out file
 touch /tmp/gtdistd.out
@@ -51,17 +59,26 @@ cp /tmp/gtdistd-exec.properties ${exec_prop_file}
 sed -i "s|.*GTDistributed.executor.core-count.*|GTDistributed.executor.core-count = ${cpe}|g" ${exec_prop_file}
 sed -i "s|.*GTDistributed.executor.priority.*|GTDistributed.executor.priority = ${priority}|g" ${exec_prop_file}
 
+# START GTDIST DAEMON
+# Get daemon version
+vn=$(echo ${version} | sed 's/v//g')
+if [ ${vn} -lt 2020 ]; then
+    dversion=v2020
+else
+    dversion=${version}
+fi
+
 configure_daemon_systemd() {
     local prop_file=$1
     # Following instructions in section 5b of /opt/gtsuite/v2020/distributed/bin/README_Linux.md
-    sudo cp ${GTIHOME}/v2020/distributed/bin/systemd-unit-files/gtdistd.service /etc/systemd/system/
-    sudo cp -r ${GTIHOME}/v2020/distributed/bin/systemd-unit-files/gtdistd.service.d /etc/systemd/system/
+    sudo cp ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service /etc/systemd/system/
+    sudo cp -r ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service.d /etc/systemd/system/
     conf_file=/etc/systemd/system/gtdistd.service.d/override.conf
-    sudo sed -i "s|User=.*|User=${GT_USER}|g" ${conf_file}
+    sudo sed -i "s|User=.*|User=${USER}|g" ${conf_file}
     sudo sed -i "s|Environment=GTIHOME=.*|Environment=GTIHOME=${GTIHOME}|g" ${conf_file}
     sudo sed -i "s|Environment=GT_VERSION_HOME=.*|Environment=GT_VERSION_HOME=${GT_VERSION_HOME}|g" ${conf_file}
     sudo sed -i "s|Environment=GT_CONF=.*|Environment=GT_CONF=${prop_file}|g" ${conf_file}
-    # Environment=JRE_HOME=/opt/gtsuite/v2020/GTsuite/jre/linux_x86_64
+    # Environment=JRE_HOME=/opt/gtsuite/${dversion}/GTsuite/jre/linux_x86_64
     # Environment=JAVA_OPTS=
     # Environment=DAEMON_OUT=/tmp/gtdistd.out
 
@@ -74,7 +91,7 @@ configure_daemon_systemd() {
     sudo systemctl status gtdistd.service
 
     # Launch GUI Need X11 DISPLAY!
-    # $GTIHOME/v2020/distributed/bin/gtdistdconfig.sh
+    # $GTIHOME/${dversion}/distributed/bin/gtdistdconfig.sh
 }
 
 configure_daemon_systemd ${exec_prop_file}
@@ -82,6 +99,7 @@ configure_daemon_systemd ${exec_prop_file}
 
 # Wait for the sim file to appear (sim_found) and for ALL sim files to disappear
 # before exiting the cog-job-submit
+# FIXME What if simulation is halted? 1cyl_3.hlt
 # FIXME: Some jobs are so fast that we never catch the .sim files
 # FIXME: If min slider = 1 and no inputs wti is going to shut down and boot repeatedly every 5 min
 sim_found=false # True when a sim file is found
@@ -96,7 +114,9 @@ while true; do
     accu=$((accu + wp))
     date
     sim_counter=$(find ${exec_work_dir}/gtdistd -name **.sim | wc -l)
+    hlt_counter=$(find ${exec_work_dir}/gtdistd -name **.hlt | wc -l)
     echo "Running simulations: ${sim_counter}"
+    echo "Halted  simulations: ${hlt_counter}"
     if [ ${sim_counter} -eq 0 ]; then
         echo "No ongoing simulation was found"
         if ${sim_found}; then # There was a simulation
@@ -112,17 +132,20 @@ while true; do
     else
         sim_found=true
         exit_counter=0
-        cpu_usage=$(ps -eo %cpu --sort=-%cpu | awk 'FNR == 2 {print}' | awk '{print int($0)}')
-        echo "CPU usage of most demanding process: ${cpu_usage}"
-        if [ ${cpu_usage} -lt 15 ]; then
-            cpu_exit=$((cpu_exit + 1))
-            echo "${cpu_usage} < 15% --> CPU exit counter: ${cpu_exit}/50"
-            if [ ${cpu_exit} -gt 50 ]; then
-                sudo systemctl stop gtdistd.service
-                exit 0
+        # If no simulation is paused and cpu usage is small --> exit
+        if [ ${hlt_counter} -eq 0 ]; then
+            cpu_usage=$(ps -eo %cpu --sort=-%cpu | awk 'FNR == 2 {print}' | awk '{print int($0)}')
+            echo "CPU usage of most demanding process: ${cpu_usage}"
+            if [ ${cpu_usage} -lt 15 ]; then
+                cpu_exit=$((cpu_exit + 1))
+                echo "${cpu_usage} < 15% --> CPU exit counter: ${cpu_exit}/50"
+                if [ ${cpu_exit} -gt 50 ]; then
+                    sudo systemctl stop gtdistd.service
+                    exit 0
+                fi
+            else
+                cpu_exit=0
             fi
-        else
-            cpu_exit=0
         fi
     fi
     if ! ${sim_found} && [ ${accu} -gt ${tp} ]; then

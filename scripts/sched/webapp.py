@@ -1,5 +1,4 @@
 import os
-import os
 import xml.etree.ElementTree as ET
 
 # Convert info from webapp to job log

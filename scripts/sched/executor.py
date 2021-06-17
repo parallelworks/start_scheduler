@@ -1,11 +1,21 @@
 import math
+import os
+import glob
 
 class AggregatedExecutor():
-    def __init__(self, pool_info, pool_names, supply, allow_idle_cores = True):
+    def __init__(self, pool_info, pool_names, allow_idle_cores = True):
         self.pools = self.get_pools(pool_info, pool_names)
         self.pool_names = [ p["name"] for p in self.pools ]
         self.allow_idle_cores = allow_idle_cores
-        self.supply = supply
+        self.supply = self.get_supply(pool_names)
+
+    # FIXME: Not the cleanest way of doing this.
+    # When a cjs command is submitted a file is written to '/tmp/pname-**' using mkstemp
+    def get_supply(self, pool_names):
+        cjs_by_pool = dict.fromkeys(pool_names, 0)
+        for pname in pool_names:
+            cjs_by_pool[pname] = len(glob.glob('/tmp/' + pname + "-**"))
+        return cjs_by_pool
 
     def get_pools(self, pool_info_data, pool_names):
         # Only use executor pools
@@ -13,11 +23,17 @@ class AggregatedExecutor():
         # Only use pools with more than 1 vCPU
         exec_pools = [pool for pool in exec_pools if int(pool['info']['cpuPerWorker']) > 1]
         # Handle contradictory pool settings:
-        # In case a pool is off and the min/max slider are not zero --> Set them to zero here:
+        # In case a pool is off or has no serviceport --> Set min/max sliders to zero
+        #                                             --> Delete cjs submissions records
         for pool in exec_pools:
-            if pool["status"] == "off":
+            service_port = str(pool['info']['ports']['serviceport'])
+            if pool["status"] == "off" or not service_port.isdigit():
                 pool["settings"]["min"] = 0
                 pool["settings"]["max"] = 0
+                # FIXME: Not the cleanest place to do this!
+                # - Delete all cjs submission records to this pool
+                [os.remove(f) for f in glob.glob('/tmp/' + pool['name'] + "-**")]
+
         # Sort pools by number of vcpus
         cpus_per_pool = [int(pool['info']['cpuPerWorker'])/2 for pool in exec_pools]
         if cpus_per_pool:
@@ -56,7 +72,7 @@ class AggregatedExecutor():
                 self.supply[pool["name"]] += needed_workers
 
         # Step 2: Send at least min_workers per pool type
-        min_workers = 1
+        min_workers = 0 # Deactivated
         # From small to large
         for pool in self.pools:
             running_workers = self.supply[pool["name"]]
@@ -133,7 +149,7 @@ if __name__ == "__main__":
     print(Executor.supply)
     Executor.get_priority()
     print(Executor.priority)
-    pw_http="http://beta.parallel.works"
+    pw_http="http://beta2.parallel.works"
     exec_work_dir = "exec_work_dir"
     gt_user = "gt_user"
     sched_ip = "123"

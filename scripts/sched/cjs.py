@@ -3,7 +3,6 @@ import os
 import json
 from random import randint
 import tempfile
-import glob
 import subprocess
 
 def replace_root_dir(path, root_dir):
@@ -70,11 +69,5 @@ def Popen_cjs_cmd(cjs_cmd, pool_name = None):
         cjs_cmd = "{}; rm {}".format(cjs_cmd, cjs_fname)
     subprocess.Popen(cjs_cmd, shell = True)
 
-
-def count_cjs_by_pool(pool_names):
-    cjs_by_pool = dict.fromkeys(pool_names, 0)
-    for pname in pool_names:
-        cjs_by_pool[pname] = len(glob.glob('/tmp/' + pname + "-**"))
-    return cjs_by_pool
 
 

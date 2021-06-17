@@ -7,10 +7,11 @@ import webapp
 def get_running_and_queued(job_dict):
     rqc = 0
     rqc_status = ["QUEUED", "SUBMITTING", "SUBMITTED", "RUNNING"]
-    for key,value in job_dict["sim_packets"].items():
-        status = value["status"]
-        if any([st == status for st in rqc_status]):
-           rqc += 1
+    if hasattr(job_dict["sim_packets"], 'items'):
+        for key,value in job_dict["sim_packets"].items():
+            status = value["status"]
+            if any([st == status for st in rqc_status]):
+                rqc += 1
     return rqc
 
 # Counts current core demand by looking are the running + pending packets
@@ -66,6 +67,34 @@ def get_active_jobs(webapp_xml, sched_work_dir):
             del active_jobs[job]
     return active_jobs
 
+# Sample active_jobs:
+# {'JMYZQ7': {'Name': '1cyl_3','model.product': 'GTsuiteMP','solver.parallel-cpu': 1, 'scheduler.max-licenses-per-batch': None, 'scheduler.max-cores-per-batch': None, 'status': 'QUEUED','sim_packets': {
+#    '0001': {'status': 'QUEUED'},'0002': {'status': 'QUEUED'},'0003': {'status': 'QUEUED'},'0004': {'status': 'QUEUED'}}}
+def remove_jobs_with_no_balance(active_jobs, balance):
+    mapping = {
+        'gtdrive': 'gtsuite',
+        'gtpower': 'gtsuite',
+        'gtpowerlab': 'gtsuite',
+        'gtsuite': 'gtsuite',
+        'gtsuitemp': 'gtsuite',
+        'xlink': 'gtsuite',
+        'gtautoliononed': 'gtautoliononed',
+        'gtpowerxrt': 'gtpowerxrt'
+    }
+
+    active_jobs_with_balance = deepcopy(active_jobs)
+
+    for job, job_info in active_jobs.items():
+        job_license = mapping[
+            job_info['model.product'].lower()
+        ]
+        if job_license not in balance:
+            del active_jobs_with_balance[job]
+        elif balance[job_license] <= 0:
+            del active_jobs_with_balance[job]
+
+    return active_jobs_with_balance
+
 # Update job records JSON file with active jobs info
 def update_job_records(job_records, active_jobs):
     if job_records:
@@ -88,4 +117,6 @@ def update_job_records(job_records, active_jobs):
     else:
          with open(job_records_json, 'w') as json_file:
             json.dump(active_jobs, json_file, indent = 4)
+
+
 

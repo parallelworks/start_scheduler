@@ -3,7 +3,7 @@
   <inputs>
     <section name='required_info' type='section' title='Required info' expanded='true'>
       <param name='executor_pools' type='select' label='Select executor pools' width='50%_none' help='Select executor pools to run GT packets. If more than one pool is selected the smart pool selector will distribute the load to the pools.' multiple='true'>
-        <option value="GTEXECUTOR" selected="true">GTEXECUTOR</option>
+        <option value="pwexec2vcpu" selected="true">pwexec2vcpu</option>
       </param>
       <param name='cloud' type='select' label='Cloud platform' width='25%' help='Select ' multiple='false'>
         <option value="AWS" selected="true">AWS</option>
