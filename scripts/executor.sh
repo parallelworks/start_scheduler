@@ -104,9 +104,9 @@ configure_daemon_systemd ${exec_prop_file}
 # FIXME: If min slider = 1 and no inputs wti is going to shut down and boot repeatedly every 5 min
 sim_found=false # True when a sim file is found
 # Watcher period: Watcher checks for sim files every wp seconds
-wp=10
+wp=3
 # Timeout period: cog-job will exit even if no sim file was found after tp seconds
-tp=300
+tp=600
 accu=0
 cpu_exit=0
 while true; do
@@ -119,27 +119,29 @@ while true; do
     echo "Halted  simulations: ${hlt_counter}"
     if [ ${sim_counter} -eq 0 ]; then
         echo "No ongoing simulation was found"
+        cpu_exit=0
         if ${sim_found}; then # There was a simulation
             echo "All simulation were completed"
             # Will exit after sim was not found 3 times
             exit_counter=$((exit_counter + 1))
             echo "Exit counter: ${exit_counter}"
-            if [ ${exit_counter} -gt 3 ]; then
+            if [ ${exit_counter} -gt 60 ]; then
                 sudo systemctl stop gtdistd.service
                 exit 0
             fi
         fi
     else
+        # One or more simulations are running
         sim_found=true
         exit_counter=0
         # If no simulation is paused and cpu usage is small --> exit
         if [ ${hlt_counter} -eq 0 ]; then
             cpu_usage=$(ps -eo %cpu --sort=-%cpu | awk 'FNR == 2 {print}' | awk '{print int($0)}')
             echo "CPU usage of most demanding process: ${cpu_usage}"
-            if [ ${cpu_usage} -lt 15 ]; then
+            if [ ${cpu_usage} -lt 10 ]; then
                 cpu_exit=$((cpu_exit + 1))
                 echo "${cpu_usage} < 15% --> CPU exit counter: ${cpu_exit}/50"
-                if [ ${cpu_exit} -gt 50 ]; then
+                if [ ${cpu_exit} -gt 120 ]; then
                     sudo systemctl stop gtdistd.service
                     exit 0
                 fi

@@ -10,6 +10,8 @@ pp = PrettyPrinter(indent = 4)
 
 # FIXME: Find better streaming approach! Currently needs the /pw/modules/wftemplates/stream.sh file!
 stream_script = "/pw/modules/wfbuilder/stream.sh"
+if not os.path.isfile(stream_script):
+    stream_script = os.getcwd() + "/wfbuilder/stream.sh"
 
 # stream_host = "goofs.parallel.works"
 class SimpleBashRunner():
