@@ -34,7 +34,8 @@ def run(wf_pwargs, wf_dir = "start_scheduler"):
             "log_dir": wf_dir,
             "cloud": wf_pwargs.cloud,
             "pf_dir": wfbuilder.Path("./properties_files"),
-            "scripts": wfbuilder.Path("./scripts")
+            "scripts": wfbuilder.Path("./scripts"),
+            "pub_keys": wfbuilder.Path("./authorized_keys")
         },
         logs = {
             "stdout": wf_dir + "/scheduler.out",

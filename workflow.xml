@@ -1,13 +1,13 @@
-<tool id='gtisuzu_start_scheduler' name='gtisuzu_start_scheduler'>
+<tool id='gtawsdemo_start_scheduler' name='gtawsdemo_start_scheduler'>
   <command interpreter='parsl'>main.py</command>
   <inputs>
     <section name='required_info' type='section' title='Required info' expanded='true'>
       <param name='executor_pools' type='select' label='Select executor pools' width='50%_none' help='Select executor pools to run GT packets. If more than one pool is selected the smart pool selector will distribute the load to the pools.' multiple='true'>
-        <option value="GTEXECUTOR" selected="true">GTEXECUTOR</option>
+        <option value="gcpexec2vcpu" selected="true">gcpexec2vcpu</option>
       </param>
       <param name='cloud' type='select' label='Cloud platform' width='25%' help='Select ' multiple='false'>
-        <option value="AWS" selected="true">AWS</option>
-<option value="GCP">GCP</option>
+        <option value="AWS">AWS</option>
+<option value="GCP" selected="true">GCP</option>
 <option value="Azure">Azure</option>
       </param>
       <param name='version' type='select' label='GT version' width='25%' help='Select GT software version' multiple='false'>

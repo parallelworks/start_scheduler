@@ -44,6 +44,20 @@ echo "Scheduler Internal IP:   ${sched_ip_int}"
 
 ulimit -u
 
+# Add public SSH keys for tunneling to scheduler ports:
+# If authorized_keys file is not empty:
+if [ -s authorized_keys ]; then
+    echo Adding public SSH keys to user tunnel
+    auth_keys=$(cat authorized_keys)
+    sudo adduser tunnel
+    sudo runuser - tunnel -c "mkdir -p /home/tunnel/.ssh"
+    sudo runuser - tunnel -c "chmod 0700 /home/tunnel/.ssh/"
+    sudo runuser - tunnel -c "echo \"${auth_keys}\" > /home/tunnel/.ssh/authorized_keys"
+    sudo runuser - tunnel -c "chmod 0700 /home/tunnel/.ssh/authorized_keys"
+    sudo usermod tunnel -s /sbin/nologin
+fi
+
+
 # Open tunnel to license server through beta:
 # FIXME: wont work with triple license!
 # export GTISOFT_LICENSE_FILE=${lic_port}:localhost

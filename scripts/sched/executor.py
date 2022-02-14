@@ -40,8 +40,11 @@ class AggregatedExecutor():
             cpus_per_pool, indices = zip(*sorted(zip(cpus_per_pool, range(len(cpus_per_pool))), reverse = True))
         else:
             indices = []
+        exec_pools = [exec_pools[i] for i in indices ]
+
         # Remove pools with duplicate number of vCPUs
-        exec_pools = [exec_pools[i] for i in indices if cpus_per_pool[i] not in cpus_per_pool[:i]]
+        indices = [ cpus_per_pool.index(i) for i in set(cpus_per_pool) ]
+        exec_pools = [ exec_pools[i] for i in indices ]
         return exec_pools
 
     def get_cores(self):
