@@ -79,6 +79,7 @@ def remove_jobs_with_no_balance(active_jobs, balance):
         'gtsuitemp': 'gtsuite',
         'xlink': 'gtsuite',
         'gtautoliononed': 'gtautoliononed',
+        'gtautolion': 'gtautoliononed',
         'gtpowerxrt': 'gtpowerxrt'
     }
 

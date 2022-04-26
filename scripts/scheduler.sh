@@ -44,6 +44,9 @@ echo "Scheduler Internal IP:   ${sched_ip_int}"
 
 ulimit -u
 
+# Make sure tmp directories are not cleaned periodically
+sudo sed -i "s|^v|#v|g" /usr/lib/tmpfiles.d/tmp.conf
+
 # Add public SSH keys for tunneling to scheduler ports:
 # If authorized_keys file is not empty:
 if [ -s authorized_keys ]; then
@@ -106,6 +109,8 @@ sudo mkdir -p ${sched_work_dir}
 dname=$(lsblk | tail -n1 | awk '{print $1}' | tr -cd '[:alnum:]._-')
 if [[ ${cloud} == "GCP" ]]; then
     did=$(ls -1l /dev/disk/by-id/google-* | grep ${dname} | awk '{print $9}')
+    # ONLY FIRST TIME:
+    #sudo mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard ${did}
     sudo mount -o discard,defaults ${did} ${sched_work_dir}
 elif [[ ${cloud} == "AWS" ]]; then
     # ONLY FIRST TIME!

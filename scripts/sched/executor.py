@@ -42,7 +42,6 @@ class AggregatedExecutor():
         # Sort pools by number of vcpus
         cpus_per_pool = [int(pool['info']['cpuPerWorker'])/2 for pool in exec_pools]
         if cpus_per_pool:
-            print('Sorting pool by cpus', flush = True)
             cpus_per_pool, indices = zip(*sorted(zip(cpus_per_pool, range(len(cpus_per_pool))), reverse = True))
         else:
             indices = []

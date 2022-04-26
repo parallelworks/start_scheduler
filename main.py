@@ -1,5 +1,8 @@
 import sys
-import os, shutil
+import os, shutil, json
+import requests
+from time import sleep
+
 import parsl
 from parslpw import pwconfig,pwargs
 from parsl.data_provider.files import File
@@ -9,6 +12,28 @@ print(parsl.__version__)
 if not os.path.isdir("wfbuilder"):
     shutil.copytree("/pw/modules/wfbuilder", "wfbuilder")
 import wfbuilder
+
+def get_pool_name():
+    with open("pw.conf") as fp:
+        Lines = fp.readlines()
+        for line in Lines:
+            if 'sites' in line:
+                return line.split('[')[1].split(']')[0]
+
+
+def get_pool_info(pool_name, url_resources, retries = 3):
+    while retries >= 0:
+        res = requests.get(url_resources)
+        for pool in res.json():
+            # FIXME: BUG sometimes pool['name'] is None when you just started the pool
+            if type(pool['name']) == str:
+                if pool['name'].replace('_','') == pool_name.replace('_',''):
+                    return pool
+        print('Retrying get_pool_info({}, {}, retries = {})'.format(pool_name, url_resources, str(retries)))
+        sleep(3)
+        retries += -1
+    raise(Exception('Pool name not found response: ' + pool_name))
+
 
 # ---- RUN WORKFLOW ---- #
 def run(wf_pwargs, wf_dir = "start_scheduler"):
@@ -52,4 +77,25 @@ if __name__ == "__main__":
     # Runs only when executed (not when imported)
     parsl.load(pwconfig)
     sched_fut = run(pwargs)
-    sched_fut.result()
+
+    try:
+        sched_fut.result()
+    except:
+        print('Workflow failed!')
+
+        pool_info = get_pool_info(
+            get_pool_name(),
+            'https://' + os.environ['PARSL_CLIENT_HOST'] +"/api/resources?key=" + os.environ['PW_API_KEY']
+        )
+        print(json.dumps(pool_info, indent = 4))
+
+        # If workflow was not killed by turning off the pool send an alert!
+        if pool_info['status'] == 'on':
+            import subprocess
+            job = os.path.basename(os.getcwd())
+            msg = "START_SCHEDULER workflow job {job} failed in account {USER}!".format(
+                job = os.path.basename(os.getcwd()),
+                USER = os.environ['PW_USER']
+            )
+            cmd = "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"" + msg + "\"}' https://hooks.slack.com/services/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"
+            subprocess.run(cmd, shell = True)
