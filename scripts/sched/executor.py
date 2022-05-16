@@ -1,4 +1,4 @@
-import math
+import math, random
 import os
 import glob
 
@@ -34,10 +34,15 @@ class AggregatedExecutor():
                 # - Delete all cjs submission records to this pool
                 [os.remove(f) for f in glob.glob('/tmp/' + pool['name'] + "-**")]
 
+        # Shuffle pools to mitigate inssuficient capacity error:
+        # - If pools with the same number of vCPUs but different zones are provided, jobs are submitted only to
+        # - one of these pools. This way that pool is chosen at random every time the demanded is satified.
+        random.shuffle(exec_pools)
         # Remove pools with duplicate number of vCPUs
-        cpus_per_pool = [int(pool['info']['cpuPerWorker'])/2 for pool in exec_pools]
-        indices = [ cpus_per_pool.index(i) for i in set(cpus_per_pool) ]
-        exec_pools = [ exec_pools[i] for i in indices ]
+        # - Commenting out to be able to choose pools with same vCPUs but on different zones
+        # cpus_per_pool = [int(pool['info']['cpuPerWorker'])/2 for pool in exec_pools]
+        # indices = [ cpus_per_pool.index(i) for i in set(cpus_per_pool) ]
+        # exec_pools = [ exec_pools[i] for i in indices ]
 
         # Sort pools by number of vcpus
         cpus_per_pool = [int(pool['info']['cpuPerWorker'])/2 for pool in exec_pools]

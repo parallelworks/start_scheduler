@@ -1,4 +1,4 @@
-import sys
+import sys, socket
 import os, shutil, json
 import requests
 from time import sleep
@@ -12,6 +12,38 @@ print(parsl.__version__)
 if not os.path.isdir("wfbuilder"):
     shutil.copytree("/pw/modules/wfbuilder", "wfbuilder")
 import wfbuilder
+
+
+def post_to_slack(message, e=None):
+    msg = {
+        "text": message,
+        "blocks": [{"type": "section", "text": {"type": "mrkdwn", "text": message}}],
+    }
+    if e != None:
+        msg["blocks"].append(
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "```" + str(e) + "```"},
+            }
+        )
+    msg["blocks"].append(
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "_Sent by {script} on {host}_".format(
+                    script = os.path.realpath(__file__),
+                    host = os.environ['PW_USER'] + '@' + socket.gethostname()
+                ),
+            },
+        }
+    )
+    url = "https://hooks.slack.com/services/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"
+
+    requests.post(
+        url, data=json.dumps(msg), headers={"Content-Type": "application/json"}
+    )
+
 
 def get_pool_name():
     with open("pw.conf") as fp:
@@ -91,11 +123,6 @@ if __name__ == "__main__":
 
         # If workflow was not killed by turning off the pool send an alert!
         if pool_info['status'] == 'on':
-            import subprocess
             job = os.path.basename(os.getcwd())
-            msg = "START_SCHEDULER workflow job {job} failed in account {USER}!".format(
-                job = os.path.basename(os.getcwd()),
-                USER = os.environ['PW_USER']
-            )
-            cmd = "curl -X POST -H 'Content-type: application/json' --data '{\"text\":\"" + msg + "\"}' https://hooks.slack.com/services/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"
-            subprocess.run(cmd, shell = True)
+            msg = "START_SCHEDULER workflow failed! @avidalto"
+            post_to_slack(msg, e = None)
