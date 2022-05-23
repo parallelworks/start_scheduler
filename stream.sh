@@ -19,9 +19,6 @@ fi
 
 chmod 777 "$PWD" -R
 
-echo
-echo "streaming from $(curl -s ifconfig.me)"
-echo
 
 ssh -o StrictHostKeyChecking=no ${port_flag} $host 'cat >"'$pushpath'"' >> logstream.out 2>&1
 

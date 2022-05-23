@@ -46,9 +46,6 @@ def open_tunnel(sp):
         open(tunnel_reg_file, 'a').close()
 
 
-#pw_http="http://beta2.parallel.works"
-pw_http="http://localhost"
-
 inp_txt = sys.argv[1]
 inp_dict = txt2dict(inp_txt)
 
@@ -59,23 +56,23 @@ exec_work_dir = inp_dict["exec_work_dir"]
 pool_names = inp_dict["pool_names"]
 pool_info_json = inp_dict["pool_info_json"]
 gtdist_exec_pfile = inp_dict["gtdist_exec_pfile"]
-log_dir = inp_dict["log_dir"]
-od_frac = float(inp_dict["od_frac"])
+od_frac = float(inp_dict["od_pct"])/100
 cloud = inp_dict["cloud"]
 sched_ip_int = inp_dict["sched_ip_int"]
 api_key = inp_dict["api_key"]
 lic_hostname = inp_dict["lic_hostname"]
+pw_url = inp_dict["pw_url"]
 
 #gtdistd_ctrl = sched_work_dir + '/gtdistd/run/gtdistd.ctrl'
 
 # Check balance will exit here if balance < 0
 # http://localhost --> DOES NOT WORK HERE!
-balance = balance_info.get_balance('http://beta2.parallel.works', api_key)
+balance = balance_info.get_balance(pw_url, api_key)
 balance_info.check_balance(balance, sched_work_dir + '/gtdistd/gtdistd-sched.properties')
 
 
 if '---' in pool_names:
-    pool_names = pool_names.split('---')
+    pool_names = pool_names.lower().split('---')
 else:
     pool_names = [pool_names]
 
@@ -115,7 +112,7 @@ for pname,nworkers in exec_overdemand.items():
     cpe = int(int(pool['info']['cpuPerWorker'])/2) # Cores per executor
     service_port = str(pool['info']['ports']['serviceport'])
     open_tunnel(service_port)
-    service_url = pw_http + ":" + service_port
+    service_url = "http://localhost:" + service_port
     for i in range(nworkers):
         exec_priority = str(Executor.priority[pname][i])
         cjs_cmd = cjs.get_cjs_cmd(

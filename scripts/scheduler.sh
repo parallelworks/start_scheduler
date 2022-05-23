@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# FIXME: This should be in the image!
+sudo pip3 install requests
+
 sleep 3
 secure_curl () {
     local curl_cmd=$1
@@ -19,11 +23,18 @@ exec_pools=$1
 version=$2 # v2020
 sum_serv=$3
 ds_cycle=$4
-od_frac=$5
+od_pct=$5
 api_key=$6 #4c1bb8ff47a0f42b96ebb670dcb09418 (not a real API key)
 pf_dir=$7 # Properties files directory
-log_dir=$8
-cloud=${9}
+cloud=$8
+stream_port=${9}
+pw_dir=${10}
+PARSL_CLIENT_HOST=${11}
+
+# STREAMING:
+bash stream.sh localhost ${pw_dir}/scheduler.out scheduler.out "30" ${stream_port} &
+bash stream.sh localhost ${pw_dir}/scheduler.err scheduler.err "30" ${stream_port} &
+
 
 apps_dir=$(dirname $0)
 export GTIHOME=/opt/gtsuite
@@ -34,7 +45,7 @@ export PATH=/opt/swift-bin/bin/:${PATH}
 export PATH=/opt/swift-pw-bin/swift-svn/bin/:${PATH}
 export PATH=/opt/bin/:${PATH}
 
-pw_http="beta2.parallel.works"
+pw_url="https://${PARSL_CLIENT_HOST}"
 
 sched_ip_ext=$(curl -s ifconfig.me) # FIXME: Get internal IP
 sched_ip_int=$(hostname -I  | cut -d' ' -f1 | sed "s/ //g")
@@ -68,7 +79,7 @@ sudo sed -i "s|.*GatewayPorts.*|GatewayPorts yes|g" /etc/ssh/sshd_config
 sudo service sshd restart
 sleep 10
 
-tunnel=$(curl -s "https://${pw_http}/api/account?key=${api_key}" | grep tunnel | sed "s/\"//g" | cut -d':' -f2-)
+tunnel=$(curl -s "${pw_url}/api/account?key=${api_key}" | grep tunnel | sed "s/\"//g" | cut -d':' -f2-)
 lic_hostname=$(echo ${tunnel} | cut -d',' -f2)
 license_port=$(echo ${tunnel} | cut -d',' -f3)
 vendor_port=$(echo ${tunnel} | cut -d',' -f4)
@@ -222,18 +233,18 @@ create_ms_input () {
     echo "pool_names=${exec_pools}" >> ${ms_input}
     echo "pool_info_json=pools_info.json" >> ${ms_input}
     echo "gtdist_exec_pfile=${exec_prop_file}" >> ${ms_input}
-    echo "log_dir=${log_dir}" >> ${ms_input}
-    echo "od_frac=${od_frac}" >> ${ms_input}
+    echo "od_pct=${od_pct}" >> ${ms_input}
     echo "cloud=${cloud}" >> ${ms_input}
     echo "api_key=${api_key}" >> ${ms_input}
     echo "sched_ip_int=${sched_ip_int}" >> ${ms_input}
     echo "lic_hostname=${lic_hostname}" >> ${ms_input}
+    echo "pw_url=${pw_url}" >> ${ms_input}
 }
 
 ms_input=main_input.txt
 while true; do
     sleep ${ds_cycle}
-    secure_curl "curl -s https://${pw_http}/api/resources?key=${api_key}" pools_info.json
+    secure_curl "curl -s ${pw_url}/api/resources?key=${api_key}" pools_info.json
     secure_curl "curl -s http://${sched_ip_int}:8979/jobs/?xml" webapp.xml
     echo; date
     create_ms_input

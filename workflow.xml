@@ -1,14 +1,14 @@
 <tool id='gtawsdemo_start_scheduler' name='gtawsdemo_start_scheduler'>
-  <command interpreter='parsl'>main.py</command>
+  <command interpreter='bash'>main.sh</command>
   <inputs>
     <section name='required_info' type='section' title='Required info' expanded='true'>
       <param name='executor_pools' type='select' label='Select executor pools' width='50%_none' help='Select executor pools to run GT packets. If more than one pool is selected the smart pool selector will distribute the load to the pools.' multiple='true'>
-<option value="pwgtexec2vcpu" selected="true">pwgtexec2vcpu</option>
-<option value="pwgtexec2vcpua" selected="true">pwgtexec2vcpua</option>
+<option value="gcpexec2vcpu" selected="true">gcpexec2vcpu</option>
+<option value="gcpexec4vcpu" selected="true">gcpexec4vcpu</option>
       </param>
       <param name='cloud' type='select' label='Cloud platform' width='25%' help='Select ' multiple='false'>
-        <option value="AWS"  selected="true">AWS</option>
-<option value="GCP">GCP</option>
+        <option value="AWS">AWS</option>
+<option value="GCP"  selected="true">GCP</option>
 <option value="Azure">Azure</option>
       </param>
       <param name='version' type='select' label='GT version' width='25%' help='Select GT software version' multiple='false'>
@@ -26,7 +26,7 @@
     <section name='scheduler' type='section' conditional='[object Object]' title='Advanced PW scheduler options' expanded='false'>
       <param name='ds_cycle' label='Core demand sensing cycle duration [s]' type='text' value='60' help='Specify the cycle duration for sensing the core demand' width='25%'>
       </param>
-      <param name='od_frac' label='Over demand satisfaction fraction [0.1,1]' type='text' value='0.75' help='Fraction of the core over demand to satisfy every cycle. If the value 1 is selected all the core over demand is satisfied in just one cycle. Select less than 1 if the packet runtime is much smaller than VM startup time.' width='25%'>
+      <param name='od_pct' label='Over demand satisfaction percentage' type='integer' min='1' max='100' value='75' help='Percentage of the core over demand to satisfy every cycle. If the value 100 is selected all the core over demand is satisfied in just one cycle. Select less than 100 if the packet runtime is much smaller than VM startup time.' width='25%'>
       </param>
     </section>
   </inputs>
