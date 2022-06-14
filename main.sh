@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # INPUTS:
-# FIXME: move pool name to input form
-pool_name=gcpcheduler
 pf_dir="./properties_files"
 coaster_host=localhost
 
@@ -41,7 +39,7 @@ get_dir_stagein() {
 
 # Set serviceport variable with the service port number of a pool provided the name of the pool
 get_pool_serviceport() {
-    local pool_name=$1
+    local scheduler_pool=$1
 
     max_retries=20
     k=0
@@ -52,7 +50,7 @@ get_pool_serviceport() {
 	        exit 1
         fi
         echo "Searching for service port"
-        serviceport=$(curl -s https://${PARSL_CLIENT_HOST}/api/resources?key=${PW_API_KEY} | grep -E 'name|serviceport' | tr -d '", ' | sed 'N;s/\n/=/' | grep ${pool_name}= | rev | cut -d':' -f1 | rev)
+        serviceport=$(curl -s https://${PARSL_CLIENT_HOST}/api/resources?key=${PW_API_KEY} | grep -E 'name|serviceport' | tr -d '", ' | sed 'N;s/\n/=/' | grep ${scheduler_pool}= | rev | cut -d':' -f1 | rev)
         if [[ ${serviceport} -gt 0 ]]; then
 	        break
         else
@@ -68,7 +66,7 @@ f_read_cmd_args $@
 
 scripts=$(get_dir_stagein scripts)
 properties_files=$(get_dir_stagein ${pf_dir})
-
+scheduler_pool=$(echo ${scheduler_pool} | tr '[:upper:]' '[:lower:]')
 
 stagein="
     ${scripts} : \
@@ -78,7 +76,7 @@ stagein="
 
 
 
-get_pool_serviceport ${pool_name}
+get_pool_serviceport ${scheduler_pool}
 COASTERURL=http://${coaster_host}:${serviceport}
 echo "Coaster URL: $COASTERURL"
 
@@ -99,7 +97,7 @@ cog-job-submit -provider "coaster-persistent" \
 
 
 # Send alert if job failed!
-pool_status=$(curl -s https://${PARSL_CLIENT_HOST}/api/resources?key=${PW_API_KEY} | grep -E 'name|status' | tr -d '", ' | sed 'N;s/\n/=/' | grep ${pool_name}= | rev | cut -d':' -f1 | rev)
+pool_status=$(curl -s https://${PARSL_CLIENT_HOST}/api/resources?key=${PW_API_KEY} | grep -E 'name|status' | tr -d '", ' | sed 'N;s/\n/=/' | grep ${scheduler_pool}= | rev | cut -d':' -f1 | rev)
 if [[ ${pool_status} == "on" ]]; then
     msg="Failed START_SCHEDULER job ${job_number} in account ${PW_USER} - @avidalto"
     cat alert_slack.sh | sed "s|__MSG__|${msg}|g" > alert_slack_.sh

@@ -2,17 +2,19 @@
   <command interpreter='bash'>main.sh</command>
   <inputs>
     <section name='required_info' type='section' title='Required info' expanded='true'>
+      <param name='scheduler_pool' label='Select the scheduler pool' type='text' value='scheduler' help='Type the name of the scheduler pool' width='50%'></param>
       <param name='executor_pools' type='select' label='Select executor pools' width='50%_none' help='Select executor pools to run GT packets. If more than one pool is selected the smart pool selector will distribute the load to the pools.' multiple='true'>
-<option value="gcpexec2vcpu" selected="true">gcpexec2vcpu</option>
-<option value="gcpexec4vcpu" selected="true">gcpexec4vcpu</option>
+        <option value="gcpexec2vcpu" selected="true">gcpexec2vcpu</option>
+<option value="gcpexec4vcpu">gcpexec4vcpu</option>
       </param>
       <param name='cloud' type='select' label='Cloud platform' width='25%' help='Select ' multiple='false'>
-        <option value="AWS">AWS</option>
-<option value="GCP"  selected="true">GCP</option>
+        <option value="AWS" selected="true">AWS</option>
+<option value="GCP">GCP</option>
 <option value="Azure">Azure</option>
       </param>
       <param name='version' type='select' label='GT version' width='25%' help='Select GT software version' multiple='false'>
-        <option value="v2021" selected="true">v2021</option>
+        <option value="v2022" selected="true">v2022</option>
+<option value="v2021">v2021</option>
 <option value="v2020">v2020</option>
 <option value="v2019">v2019</option>
 <option value="v2018">v2018</option>
