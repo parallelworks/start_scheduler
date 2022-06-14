@@ -50,7 +50,7 @@ get_pool_serviceport() {
 	        exit 1
         fi
         echo "Searching for service port"
-        serviceport=$(curl -s https://${PARSL_CLIENT_HOST}/api/resources?key=${PW_API_KEY} | grep -E 'name|serviceport' | tr -d '", ' | sed 'N;s/\n/=/' | grep ${scheduler_pool}= | rev | cut -d':' -f1 | rev)
+        serviceport=$(curl -s https://${PARSL_CLIENT_HOST}/api/resources?key=${PW_API_KEY} | grep -E 'name|serviceport' | tr -d '", ' | sed 'N;s/\n/=/' | grep name\:${scheduler_pool}= | rev | cut -d':' -f1 | rev)
         if [[ ${serviceport} -gt 0 ]]; then
 	        break
         else
