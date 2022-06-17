@@ -5,7 +5,7 @@ pf_dir="./properties_files"
 coaster_host=localhost
 
 # WORKFLOW:
-job_number=$(basename ${PWD})
+job_number=$(basename $(dirname ${PWD}))
 remote_dir=/tmp/pworks/job-${job_number}
 
 # Read arguments in format "--pname pval" into export pname=pval
