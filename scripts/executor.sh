@@ -85,6 +85,7 @@ configure_daemon_systemd() {
     # Verify the syntax of the `override.conf` file contains no syntax errors. A correct file
     # will generate no output.
     sudo systemd-analyze verify /etc/systemd/system/gtdistd.service
+    sudo systemctl daemon-reload
 
     # Restart service:
     sudo systemctl start gtdistd.service
