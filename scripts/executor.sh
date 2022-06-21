@@ -139,7 +139,7 @@ while true; do
         if [ ${hlt_counter} -eq 0 ]; then
             cpu_usage=$(ps -eo %cpu --sort=-%cpu | awk 'FNR == 2 {print}' | awk '{print int($0)}')
             echo "CPU usage of most demanding process: ${cpu_usage}"
-            if [ ${cpu_usage} -lt 10 ]; then
+            if [ ${cpu_usage} -lt 15 ]; then
                 cpu_exit=$((cpu_exit + 1))
                 echo "${cpu_usage} < 15% --> CPU exit counter: ${cpu_exit}/50"
                 if [ ${cpu_exit} -gt 120 ]; then
