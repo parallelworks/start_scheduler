@@ -69,6 +69,7 @@ else
 fi
 
 configure_daemon_systemd() {
+    echo Configuring daemon
     local prop_file=$1
     # Following instructions in section 5b of /opt/gtsuite/v2020/distributed/bin/README_Linux.md
     sudo cp ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service /etc/systemd/system/
@@ -84,11 +85,15 @@ configure_daemon_systemd() {
 
     # Verify the syntax of the `override.conf` file contains no syntax errors. A correct file
     # will generate no output.
+    echo "sudo systemd-analyze verify /etc/systemd/system/gtdistd.service"
     sudo systemd-analyze verify /etc/systemd/system/gtdistd.service
+    echo "sudo systemctl daemon-reload"
     sudo systemctl daemon-reload
 
     # Restart service:
+    echo "sudo systemctl start gtdistd.service"
     sudo systemctl start gtdistd.service
+    echo "sudo systemctl status gtdistd.service"
     sudo systemctl status gtdistd.service
 
     # Launch GUI Need X11 DISPLAY!
