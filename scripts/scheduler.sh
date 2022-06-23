@@ -19,6 +19,9 @@ secure_curl () {
     done
 }
 
+echo; echo INPUTS:
+echo $@; echo
+
 exec_pools=$1
 version=$2 # v2020
 sum_serv=$3
