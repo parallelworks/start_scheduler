@@ -66,7 +66,9 @@ f_read_cmd_args $@
 
 scripts=$(get_dir_stagein scripts)
 properties_files=$(get_dir_stagein ${pf_dir})
-scheduler_pool=$(echo ${scheduler_pool} | tr '[:upper:]' '[:lower:]')
+#scheduler_pool=$(echo ${scheduler_pool} | tr '[:upper:]' '[:lower:]')
+scheduler_pool=$(echo ${scheduler_pool} | tr '[:upper:]' '[:lower:]' | sed "s/_//g")
+
 
 stagein="
     ${scripts} : \
