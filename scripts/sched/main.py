@@ -74,7 +74,7 @@ balance_info.check_balance(balance, sched_work_dir + '/gtdistd/gtdistd-sched.pro
 if '---' in pool_names:
     pool_names = pool_names.lower().split('---')
 else:
-    pool_names = [pool_names]
+    pool_names = [pool_names.lower()]
 
 
 pp = PrettyPrinter(depth=4)
