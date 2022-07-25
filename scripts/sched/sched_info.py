@@ -80,7 +80,8 @@ def remove_jobs_with_no_balance(active_jobs, balance):
         'xlink': 'gtsuite',
         'gtautoliononed': 'gtautoliononed',
         'gtautolion': 'gtautoliononed',
-        'gtpowerxrt': 'gtpowerxrt'
+        'gtpowerxrt': 'gtpowerxrt',
+        'optimizer': ''
     }
 
     active_jobs_with_balance = deepcopy(active_jobs)
@@ -89,7 +90,11 @@ def remove_jobs_with_no_balance(active_jobs, balance):
         job_license = mapping[
             job_info['model.product'].lower()
         ]
-        if job_license not in balance:
+
+        if not job_license:
+            # In some cases the job license is unkown at this point
+            continue
+        elif job_license not in balance:
             del active_jobs_with_balance[job]
         elif balance[job_license] <= 0:
             del active_jobs_with_balance[job]
