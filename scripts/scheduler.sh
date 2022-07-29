@@ -33,6 +33,7 @@ cloud=$8
 stream_port=${9}
 pw_dir=${10}
 PARSL_CLIENT_HOST=${11}
+allow_ps=${12}
 
 # STREAMING:
 bash stream.sh localhost ${pw_dir}/scheduler.out scheduler.out "30" ${stream_port} &
@@ -243,6 +244,7 @@ create_ms_input () {
     echo "sched_ip_int=${sched_ip_int}" >> ${ms_input}
     echo "lic_hostname=${lic_hostname}" >> ${ms_input}
     echo "pw_url=${pw_url}" >> ${ms_input}
+    echo "allow_ps=${allow_ps}" >> ${ms_input}
 }
 
 ms_input=main_input.txt

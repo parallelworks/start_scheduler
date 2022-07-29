@@ -62,6 +62,7 @@ sched_ip_int = inp_dict["sched_ip_int"]
 api_key = inp_dict["api_key"]
 lic_hostname = inp_dict["lic_hostname"]
 pw_url = inp_dict["pw_url"]
+allow_ps = inp_dict["allow_ps"]
 
 #gtdistd_ctrl = sched_work_dir + '/gtdistd/run/gtdistd.ctrl'
 
@@ -89,7 +90,7 @@ for pool in pool_info:
 
 active_jobs = sched_info.get_active_jobs(webapp_xml, sched_work_dir)
 active_jobs = sched_info.remove_jobs_with_no_balance(active_jobs, balance)
-core_demand = sched_info.count_core_demand(active_jobs)
+core_demand = sched_info.count_core_demand(active_jobs, allow_ps)
 print("Core demand: {}".format(str(core_demand)))
 
 # Define executor

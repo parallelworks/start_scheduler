@@ -22,7 +22,9 @@
       </param>
     </section>
     <section name='advanced_info' type='section' conditional='[object Object]' title='Advanced GT options' expanded='false'>
-      <param name='sum_serv' type='boolean' truevalue='Yes' falsevalue='No' checked='true' label='Activate job summary service' width='50%' float='right'>
+      <param name='sum_serv' type='boolean' truevalue='Yes' falsevalue='No' checked='true' label='Activate job summary service' width='50%_none' float='right'>
+      </param>
+      <param name='allow_ps' type='boolean' truevalue='Yes' falsevalue='No' checked='true' label='Allow parallel solver' width='50%' float='right'>
       </param>
     </section>
     <section name='scheduler' type='section' conditional='[object Object]' title='Advanced PW scheduler options' expanded='false'>

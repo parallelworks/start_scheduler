@@ -3,6 +3,7 @@ import os
 from copy import deepcopy
 import joblog
 import webapp
+import alert
 
 def get_running_and_queued(job_dict):
     rqc = 0
@@ -20,12 +21,21 @@ def get_running_and_queued(job_dict):
 # product_available --> To know remaining product runtime
 # product_limits    --> To know total product licenses
 # FIXME: Cannot use model.product!
-def count_core_demand(active_jobs):
+def count_core_demand(active_jobs, allow_ps):
     core_demand = 0
     if not active_jobs:
         return 0
 
     for job,job_info in active_jobs.items():
+
+        # Ignore cases with parallel-cpu > 1 if customer is not using their own resource:
+        # FIXME: Only if user is running in PW resources!
+        if job_info["solver.parallel-cpu"] > 1 and allow_ps == 'False':
+            msg = 'WARNING: DO NOT USE THE PARALLEL SOLVER WHEN RUNNING IN PW CLOUD RESOURCES!!!'
+            print(msg, flush = True)
+            msg = 'GT job with solver.parallel-cpu > 1 was submitted! This is not permitted! @avidalto'
+            alert.post_to_slack_once(msg)
+            continue
 
         # Simulation packets running and queued
         job_packets = get_running_and_queued(job_info)
