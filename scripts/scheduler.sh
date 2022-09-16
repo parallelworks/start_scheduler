@@ -255,6 +255,7 @@ while true; do
     echo; date
     create_ms_input
     python3 ${apps_dir}/sched/main.py ${ms_input}
+    sudo sed -i "s|^v|#v|g" /usr/lib/tmpfiles.d/tmp.conf
 done
 
 # create the license node tunnel
