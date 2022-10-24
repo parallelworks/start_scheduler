@@ -87,6 +87,7 @@ echo "For more logs, open scheduler.out and scheduler.err log files once they ap
 
 cjs_args="${executor_pools} ${version} ${sum_serv} ${ds_cycle} ${od_pct} ${PW_API_KEY} ${pf_dir} ${cloud} ${PARSL_CLIENT_SSH_PORT} ${PWD} ${PARSL_CLIENT_HOST} ${allow_ps}"
 
+set -x
 cog-job-submit -provider "coaster-persistent" \
                -service-contact "$COASTERURL" \
     	       -attributes "maxWallTime=99999:00:00" \
