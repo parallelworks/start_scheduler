@@ -27,8 +27,8 @@ def webapp2dict(webapp_xml):
             if prop.attrib["key"] == "solver.parallel-cpu":
                 jobs_dict[job_id]["solver.parallel-cpu"] = int(prop.text)
 
-            if prop.attrib["key"] == "solver.parallel-mkl":
-                jobs_dict[job_id]["solver.parallel-mkl"] = int(prop.text)
+            if prop.attrib["key"] == "solver.parallel-cpu-mkl":
+                jobs_dict[job_id]["solver.parallel-cpu-mkl"] = int(prop.text)
 
             if prop.attrib["key"] == "scheduler.max-licenses-per-batch":
                 jobs_dict[job_id]["scheduler.max-licenses-per-batch"] = int(prop.text)
