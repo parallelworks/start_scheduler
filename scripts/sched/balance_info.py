@@ -68,6 +68,8 @@ def write_sched_prop_file(sched_prop_file, sched_propf_info):
 
 def check_balance(balance, sched_prop_file):
     sched_propf_info = read_sched_prop_file(sched_prop_file)
+    # Set all licenses to zero by default!
+    sched_propf_info['max-licenses'] = dict.fromkeys(sched_propf_info['max-licenses'].keys(), '0')
     sched_propf_info_new = deepcopy(sched_propf_info)
     warnings = []
     for pname, premain in balance.items():
