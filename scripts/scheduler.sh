@@ -169,6 +169,12 @@ if [[ ${sum_serv} == "True" ]]; then
     sed -i "s|GTDistributed.job-summary-service-enable.*|GTDistributed.job-summary-service-enable = true|g" ${sched_prop_file}
 fi
 
+if [[ ${allow_ps} == "True" ]]; then
+    echo "Enabling parallel solver"
+    sed -i "s|GTDistributed.scheduler.max-parallel-cores-per-solver.*||g" ${sched_prop_file}
+    sed -i "s|GTDistributed.scheduler.validation.max-parallel-cores-per-solver.*||g" ${sched_prop_file}
+fi
+
 # Start or restart gtdist daemon
 date >> ${sched_work_dir}/dates.txt
 
