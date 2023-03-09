@@ -30,14 +30,7 @@ def count_core_demand(active_jobs, allow_ps):
 
         # Ignore cases with parallel-cpu > 1 if customer is not using their own resource:
         # FIXME: Only if user is running in PW resources!
-        parallel_solver_multiplier = 1
-        if "solver.parallel-cpu" in job_info:
-            parallel_solver_multiplier = parallel_solver_multiplier * job_info["solver.parallel-cpu"]
-
-        if "solver.parallel-cpu-mkl" in job_info:
-            parallel_solver_multiplier = parallel_solver_multiplier * job_info["solver.parallel-cpu-mkl"]
-            
-        if  allow_ps == 'False' and parallel_solver_multiplier > 1:
+        if job_info["solver.parallel-cpu"] > 1 and allow_ps == 'False':
             msg = 'WARNING: DO NOT USE THE PARALLEL SOLVER WHEN RUNNING IN PW CLOUD RESOURCES!!!'
             print(msg, flush = True)
             msg = 'GT job with solver.parallel-cpu > 1 was submitted! This is not permitted! @avidalto'
@@ -57,11 +50,12 @@ def count_core_demand(active_jobs, allow_ps):
             job_lic_demand = min(job_lic, job_info["scheduler.max-licenses-per-batch"])
             job_packet_demand = min(job_packets, job_lic_demand)
 
+
         if job_info["scheduler.max-cores-per-batch"] is None:
-            job_core_demand = parallel_solver_multiplier * job_packet_demand
+            job_core_demand = job_info["solver.parallel-cpu"] * job_packet_demand
         else: # Max job cores defined
-            job_core_demand = min(parallel_solver_multiplier * job_packet_demand, job_info["scheduler.max-cores-per-batch"])
-            job_lic_demand = int(job_core_demand / parallel_solver_multiplier)
+            job_core_demand = min(job_info["solver.parallel-cpu"] * job_packet_demand, job_info["scheduler.max-cores-per-batch"])
+            job_lic_demand = int(job_core_demand / job_info["solver.parallel-cpu"])
 
         core_demand += job_core_demand
     return core_demand
@@ -116,6 +110,23 @@ def remove_jobs_with_no_balance(active_jobs, balance):
             del active_jobs_with_balance[job]
 
     return active_jobs_with_balance
+
+def remove_jobs_with_incompatible_version(active_jobs, version):
+    active_jobs_with_compatible_version = deepcopy(active_jobs)
+    sched_version = int(version.replace('v',''))
+    for job, job_info in active_jobs.items():
+        job_version = job_info['model.version']
+        try:
+            job_version = int(job_version)
+        except:
+            print('Could not convert job_version {} to integer'.format(job_version), flush = True)
+            del active_jobs_with_compatible_version[job]
+            continue
+
+        if job_version > sched_version:
+            del active_jobs_with_compatible_version[job]
+
+    return active_jobs_with_compatible_version
 
 # Update job records JSON file with active jobs info
 def update_job_records(job_records, active_jobs):
