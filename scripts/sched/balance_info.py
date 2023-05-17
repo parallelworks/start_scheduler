@@ -5,7 +5,7 @@ from copy import deepcopy
 
 # API use for now only use limit
 def get_balance(pw_http, api_key):
-    balance = {}
+    balance = {'gtsuite': 0, 'gtautoliononed': 0, 'gtpowerxrt': 0}
     response = requests.get('{}/api/account?key={}'.format(pw_http, api_key))
     for p in json.loads(response.text)['runhrs']['products']:
         balance[p['description'].lower()] = float(p['remain'])
