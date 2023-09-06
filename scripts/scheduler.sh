@@ -125,7 +125,8 @@ dname=$(lsblk | tail -n1 | awk '{print $1}' | tr -cd '[:alnum:]._-')
 if [[ ${cloud} == "GCP" ]]; then
     did=$(ls -1l /dev/disk/by-id/google-* | grep ${dname} | awk '{print $9}')
     # ONLY FIRST TIME:
-    #sudo mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard ${did}
+    echo "Formatting disk!"
+    sudo mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard ${did}
     sudo mount -o discard,defaults ${did} ${sched_work_dir}
 elif [[ ${cloud} == "AWS" ]]; then
     # ONLY FIRST TIME!
