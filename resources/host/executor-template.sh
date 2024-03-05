@@ -1,29 +1,37 @@
 #!/bin/bash
-export GTI_DB_CREATION_OPT=1
-echo "INPUTS:"
-echo $@
+#SBATCH --nodes=1
+#SBATCH --exclusive
+#SBATCH --partition=__PARTITION__
+#SBATCH --job-name=__JOB_NAME__
+#SBATCH -o __SLURM_JOB_DIR__/jobid-%j.out
+#SBATCH -e __SLURM_JOB_DIR__/__JOB_NAME__-jobid-%j.out
+#SBATCH --chdir=__SLURM_JOB_DIR__
 
-version=$1
-cpe=$2 # Cores per executor
-priority=$3 # Executor priority
-cloud=$4
-sched_ip_int=$5
-lic_hostname=$6
+cores_per_node=__CORES_PER_NODE__
+resource_type=__RESOURCE_TYPE__
+gt_version=__GT_VERSION__
+scheduler_internal_ip=__SCHEDULER_INTERNAL_IP__
+gt_license_hostname=__GT_LICENSE_HOSTNAME__
+exec_prop_file_template=__EXEC_PROP_FILE_TEMPLATE__
+
+export GTI_DB_CREATION_OPT=1
 
 exec_work_dir=/var/opt/gtsuite
 exec_prop_file=${exec_work_dir}/gtdistd/gtdistd-exec.properties
 GTIHOME=/opt/gtsuite
-GT_VERSION_HOME=${GTIHOME}/${version}
+GT_VERSION_HOME=${GTIHOME}/${gt_version}
+
+sleep 1200
 
 # ONLY IN THE EXECUTOR.sh
 # add a host pointer to internal IP of the scheduler
 cat /etc/hosts > hosts_mod
-sed -i "s|.*${lic_hostname}.*||g" hosts_mod
-echo "${sched_ip_int} ${lic_hostname}" >> hosts_mod
+sed -i "s|.*${gt_license_hostname}.*||g" hosts_mod
+echo "${scheduler_internal_ip} ${gt_license_hostname}" >> hosts_mod
 sudo cp hosts_mod /etc/hosts
 
 # Change hostname:
-if [[ ${cloud} == "AWS" ]]; then
+if [[ ${resource_type} == "pcluster2" ]]; then
     source /tmp/tags # Reads the "name" tag
     sudo hostnamectl set-hostname ${name}
 fi
@@ -39,10 +47,6 @@ chmod u+w ${exec_work_dir} -R
 mkdir -p ${exec_work_dir}/gtdistd ${exec_work_dir}/db ${exec_work_dir}/compounds
 
 # Start DB on node boot: Neehar: "Do not use the ds"
-# VERSION=$(echo ${version} | sed "s/v//g")
-# ${GTIHOME}/bin/gtcollect -V ${VERSION} dbstop
-# ${GTIHOME}/bin/gtcollect -V ${VERSION} dbstart
-# ${GTIHOME}/bin/gtcollect dbstart
 # FIXME: Wont work after 2029
 for gtv in $(ls -d ${GTIHOME}/v202*); do
     vn=$(basename ${gtv} | sed 's/v//g')
@@ -54,18 +58,17 @@ done
 touch /tmp/gtdistd.out
 chmod 777 /tmp/gtdistd.out
 
-echo Copying file /tmp/gtdistd-exec.properties to ${exec_prop_file}
-cp /tmp/gtdistd-exec.properties ${exec_prop_file}
-sed -i "s|.*GTDistributed.executor.core-count.*|GTDistributed.executor.core-count = ${cpe}|g" ${exec_prop_file}
-sed -i "s|.*GTDistributed.executor.priority.*|GTDistributed.executor.priority = ${priority}|g" ${exec_prop_file}
+echo "Copying file ${exec_prop_file_template} to ${exec_prop_file}"
+cp ${exec_prop_file_template} ${exec_prop_file}
+sed -i "s|.*GTDistributed.executor.core-count.*|GTDistributed.executor.core-count = ${cores_per_node}|g" ${exec_prop_file}
 
 # START GTDIST DAEMON
 # Get daemon version
-vn=$(echo ${version} | sed 's/v//g')
+vn=$(echo ${gt_version} | sed 's/v//g')
 if [ ${vn} -lt 2020 ]; then
     dversion=v2020
 else
-    dversion=${version}
+    dversion=${gt_version}
 fi
 
 configure_daemon_systemd() {
@@ -100,11 +103,12 @@ configure_daemon_systemd() {
     # $GTIHOME/${dversion}/distributed/bin/gtdistdconfig.sh
 }
 
+# FIXME DELETE
+sleep 60
 configure_daemon_systemd ${exec_prop_file}
 
 
-# Wait for the sim file to appear (sim_found) and for ALL sim files to disappear
-# before exiting the cog-job-submit
+# Wait for the sim file to appear (sim_found) and for ALL sim files to disappear before exiting
 # FIXME What if simulation is halted? 1cyl_3.hlt
 # FIXME: Some jobs are so fast that we never catch the .sim files
 # FIXME: If min slider = 1 and no inputs wti is going to shut down and boot repeatedly every 5 min

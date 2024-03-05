@@ -1,15 +1,8 @@
 import json
+import sys
 import os
 import requests
 from copy import deepcopy
-
-# API use for now only use limit
-def get_balance(pw_http, api_key):
-    balance = {'gtsuite': 0, 'gtautoliononed': 0, 'gtpowerxrt': 0}
-    response = requests.get('{}/api/account?key={}'.format(pw_http, api_key))
-    for p in json.loads(response.text)['runhrs']['products']:
-        balance[p['description'].lower()] = float(p['remain'])
-    return balance
 
 def read_sched_prop_file(sched_prop_file):
     sched_propf_info = {}
@@ -90,14 +83,16 @@ def check_balance(balance, sched_prop_file):
 
 
 if __name__ == '__main__':
-    balance = {'gtsuite': 1, 'gtpowerxrt': 1, 'gtautoliononed': 1}
-    #balance = {'gtsuite': 1}
-    check_balance(balance, 'sched.txt')
+    sched_prop_file = sys.argv[1]
 
-    import sys
-    sys.exit()
-    api_key = '12341a0e870c78aeeeff8cf980744b3c'
-    pw_http = 'https://beta2.parallel.works'
-    sched_work_dir='/var/opt/gtsuite/'
-    gtdistd_ctrl =  sched_work_dir + '/run/gtdistd.ctrl'
-    check_balance(pw_http, api_key, gtdistd_ctrl)
+    if not os.path.isfile('balance.json'):
+        raise FileNotFoundError("balance.json file not found.")
+
+    if not os.path.isfile(sched_prop_file):
+        raise FileNotFoundError(f"Schedule property file {sched_prop_file} not found.")
+
+    with open('balance.json') as balance_json:
+        balance = json.load(balance_json)
+
+
+    check_balance(balance, sched_prop_file)

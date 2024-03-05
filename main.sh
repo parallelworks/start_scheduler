@@ -1,108 +1,47 @@
 #!/bin/bash
 
-# INPUTS:
-pf_dir="./properties_files"
-coaster_host=localhost
+source utils/workflow-libs.sh
 
-# WORKFLOW:
-job_number=$(basename $(dirname ${PWD}))
-remote_dir=/tmp/pworks/job-${job_number}
+# Processing resource inputs
+source /etc/profile.d/parallelworks.sh
+source /etc/profile.d/parallelworks-env.sh
+source /pw/.miniconda3/etc/profile.d/conda.sh
+conda activate
 
-# Read arguments in format "--pname pval" into export pname=pval
-f_read_cmd_args(){
-    index=1
-    args=""
-    for arg in $@; do
-	    prefix=$(echo "${arg}" | cut -c1-2)
-	    if [[ ${prefix} == '--' ]]; then
-	        pname=$(echo $@ | cut -d ' ' -f${index} | sed 's/--//g')
-	        pval=$(echo $@ | cut -d ' ' -f$((index + 1)))
-	        echo "export ${pname}=${pval}" >> $(dirname $0)/env.sh
-	        export "${pname}=${pval}"
-	    fi
-        index=$((index+1))
-    done
-}
-
-# Map all files the directory dname to the remote directory in the cjs format
-get_dir_stagein() {
-    local dname=$1
-    for f in $(find ${dname} -type f); do
-        if [ -z "${stagein}" ]; then
-            stagein="${PWD}/${f} -> ${remote_dir}/${f}"
-        else
-            stagein="${stagein} : ${PWD}/${f} -> ${remote_dir}/${f}"
-        fi
-    done
-    echo ${stagein}
-}
-
-# Set serviceport variable with the service port number of a pool provided the name of the pool
-get_pool_serviceport() {
-    local scheduler_pool=$1
-
-    max_retries=20
-    k=0
-    while true; do
-        k=$((k+1))
-        if [ "${k}" -gt "${max_retries}" ]; then
-	        echo "Max retries have been reached. Giving up."
-	        exit 1
-        fi
-        echo "Searching for service port"
-        serviceport=$(curl -s https://${PARSL_CLIENT_HOST}/api/resources?key=${PW_API_KEY} | grep -E 'name|serviceport' | tr -d '", ' | sed 'N;s/\n/=/' | tr '[:upper:]' '[:lower:]' | sed "s/_//g" | grep name\:${scheduler_pool}= | rev | cut -d':' -f1 | rev)
-        if [[ ${serviceport} -gt 0 ]]; then
-	        break
-        else
-	        echo "No service port found. Make sure pool is turned on!"
-	        echo "Trying again ..."
-	        sleep 30
-        fi
-    done
-}
-
-
-f_read_cmd_args $@
-
-scripts=$(get_dir_stagein scripts)
-properties_files=$(get_dir_stagein ${pf_dir})
-#scheduler_pool=$(echo ${scheduler_pool} | tr '[:upper:]' '[:lower:]')
-scheduler_pool=$(echo ${scheduler_pool} | tr '[:upper:]' '[:lower:]' | sed "s/_//g")
-
-
-stagein="
-    ${scripts} : \
-    ${properties_files} : \
-    ${PWD}/authorized_keys -> ${remote_dir}/authorized_keys : \
-    ${PWD}/stream.sh -> ${remote_dir}/stream.sh"
-
-
-
-get_pool_serviceport ${scheduler_pool}
-COASTERURL=http://${coaster_host}:${serviceport}
-echo "Coaster URL: $COASTERURL"
-
-echo "For more logs, open scheduler.out and scheduler.err log files once they appear in the job directory."
-
-
-cjs_args="${executor_pools} ${version} ${sum_serv} ${ds_cycle} ${od_pct} ${PW_API_KEY} ${pf_dir} ${cloud} ${PARSL_CLIENT_SSH_PORT} ${PWD} ${PARSL_CLIENT_HOST} ${allow_ps}"
-
-set -x
-cog-job-submit -provider "coaster-persistent" \
-               -service-contact "$COASTERURL" \
-    	       -attributes "maxWallTime=99999:00:00" \
-               -redirected \
-               -stdout "${remote_dir}/scheduler.out" \
-               -stderr "${remote_dir}/scheduler.err" \
-    	       -directory "${remote_dir}" \
-               -stagein "${stagein}" \
-    	       bash -c "mkdir -p ${remote_dir}; cd ${remote_dir}; bash ./scripts/scheduler.sh ${cjs_args}"
-
-
-# Send alert if job failed!
-pool_status=$(curl -s https://${PARSL_CLIENT_HOST}/api/resources?key=${PW_API_KEY} | grep -E 'name|status' | tr -d '", ' | sed 'N;s/\n/=/' | tr '[:upper:]' '[:lower:]' | sed "s/_//g" | grep ${scheduler_pool}= | rev | cut -d':' -f1 | rev)
-if [[ ${pool_status} == "on" ]]; then
-    msg="Failed START_SCHEDULER job ${job_number} in account ${PW_USER} - @avidalto"
-    cat alert_slack.sh | sed "s|__MSG__|${msg}|g" > alert_slack_.sh
-    bash alert_slack_.sh
+if [ -f "/swift-pw-bin/utils/input_form_resource_wrapper.py" ]; then
+    version=$(cat /swift-pw-bin/utils/input_form_resource_wrapper.py | grep VERSION | cut -d':' -f2)
+    if [ -z "$version" ] || [ "$version" -lt 15 ]; then
+        python utils/input_form_resource_wrapper.py
+    else
+        python /swift-pw-bin/utils/input_form_resource_wrapper.py
+    fi
+else
+    python utils/input_form_resource_wrapper.py
 fi
+
+if ! [ -f "resources/host/inputs.sh" ]; then
+    displayErrorMessage "ERROR - Missing file ./resources/host/inputs.sh. Resource wrapper failed"
+fi
+
+source resources/host/inputs.sh
+
+
+cluster_rsync_exec
+
+echo "Start Scheduler Submitted"
+
+
+while true; do
+    # Check if the screen session exists on the remote host
+    if ssh "${resource_publicIp}" screen -list | grep gt-scheduler; then
+        echo "$(date) gt-scheduler session is running on ${resource_publicIp}" >> screen-session.log 2>&1
+    else
+        echo "$(date) gt-scheduler session is not running on ${resource_publicIp}" >> screen-session.log 2>&1
+        break
+    fi
+    sleep 60
+done
+
+
+bash cancel.sh
+

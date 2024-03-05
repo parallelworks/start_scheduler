@@ -1,39 +1,84 @@
-<tool id='gtawsdemo_start_scheduler' name='gtawsdemo_start_scheduler'>
+<tool id='NA' name='NA'>
   <command interpreter='bash'>main.sh</command>
+  <cancel interpreter='bash'>cancel.sh</cancel>
   <inputs>
-    <section name='required_info' type='section' title='Required info' expanded='true'>
-      <param name='scheduler_pool' label='Select the scheduler pool' type='text' value='scheduler' help='Type the name of the scheduler pool' width='50%'></param>
-      <param name='executor_pools' type='select' label='Select executor pools' width='50%_none' help='Select executor pools to run GT packets. If more than one pool is selected the smart pool selector will distribute the load to the pools.' multiple='true'>
-        <option value="gcpexec2vcpu" selected="true">gcpexec2vcpu</option>
-<option value="gcpexec4vcpu">gcpexec4vcpu</option>
-      </param>
-      <param name='cloud' type='select' label='Cloud platform' width='25%' help='Select ' multiple='false'>
-        <option value="AWS" selected="true">AWS</option>
-<option value="GCP">GCP</option>
-<option value="Azure">Azure</option>
-      </param>
-      <param name='version' type='select' label='GT version' width='25%' help='Select GT software version' multiple='false'>
-        <option value="v2022" selected="true">v2022</option>
-<option value="v2021">v2021</option>
-<option value="v2020">v2020</option>
-<option value="v2019">v2019</option>
-<option value="v2018">v2018</option>
-<option value="v2017">v2017</option>
+      <param 
+        name='gt_license_ip' 
+        label='License server IP' 
+        type='hidden' 
+        value='34.70.106.187' 
+        help='External IP address of the license server' 
+      ></param>
+      <param 
+        name='gt_license_hostname' 
+        label='License server hostname' 
+        type='hidden' 
+        value='gt-license-server' 
+        help='Hostname of the license server' 
+      ></param>
+      <param 
+        name='gt_license_port' 
+        label='License server port' 
+        type='hidden' 
+        value='27005' 
+        help='License port' 
+      ></param>
+      <param 
+        name='gt_license_vendor_port' 
+        label='License server vendor port' 
+        type='hidden' 
+        value='27777' 
+        help='License vendor port' 
+      ></param>
+    <section name='pwrl_host' type='section' title='Service host' expanded='true'>
+      <param 
+        name='resource' 
+        type='computeResource' 
+        label='Service host' 
+        hideUserWorkspace='true' 
+        help='Resource to host the service'>
       </param>
     </section>
-    <section name='advanced_info' type='section' conditional='[object Object]' title='Advanced GT options' expanded='false'>
-      <param name='sum_serv' type='boolean' truevalue='Yes' falsevalue='No' checked='true' label='Activate job summary service' width='50%_none' float='right'>
-      </param>
-      <param name='allow_ps' type='boolean' truevalue='Yes' falsevalue='No' checked='true' label='Allow parallel solver' width='50%' float='right'>
+    <section name='gt' type='section' title='GT Inputs' expanded='true'>
+      <param 
+        name='version' 
+        type='select' 
+        label='GT version' 
+        help='Select GT software version' 
+        multiple='false'
+        value='v2023'
+        options = "[{'label': 'v2023', 'value': 'v2023'}, 
+        {'label': 'v2022', 'value': 'v2022'}, 
+        {'label': 'v2021', 'value': 'v2021'}, 
+        {'label': 'v2020', 'value': 'v2020'}]">  
       </param>
     </section>
-    <section name='scheduler' type='section' conditional='[object Object]' title='Advanced PW scheduler options' expanded='false'>
-      <param name='ds_cycle' label='Core demand sensing cycle duration [s]' type='text' value='60' help='Specify the cycle duration for sensing the core demand' width='25%'>
-      </param>
-      <param name='od_pct' label='Over demand satisfaction percentage' type='integer' min='1' max='100' value='75' help='Percentage of the core over demand to satisfy every cycle. If the value 100 is selected all the core over demand is satisfied in just one cycle. Select less than 100 if the packet runtime is much smaller than VM startup time.' width='25%'>
-      </param>
+    <section name='adv_gt' type='section' title='Advanced GT Inputs' expanded='false'>
+      <param 
+        name='sum_serv' 
+        type='boolean' 
+        truevalue='Yes' 
+        falsevalue='No' 
+        checked='true' 
+        label='Activate job summary service'
+      ></param>
+      <param 
+        name='allow_ps' 
+        type='boolean' 
+        truevalue='Yes' 
+        falsevalue='No' 
+        checked='true' 
+        label='Allow parallel solver'
+      ></param>
+    </section>
+    <section name='adv_pw' type='section' title='Advanced PW Inputs' expanded='false'>
+      <param 
+        name='ds_cycle' 
+        label='Core demand sensing cycle duration [s]' 
+        type='text' 
+        value='60' 
+        help='Specify the cycle duration for sensing the core demand' 
+      ></param>
     </section>
   </inputs>
-  <outputs>
-  </outputs>
 </tool>
