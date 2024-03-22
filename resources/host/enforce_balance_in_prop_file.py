@@ -81,6 +81,11 @@ def check_balance(balance, sched_prop_file):
         [print(warning) for warning in warnings]
         write_sched_prop_file(sched_prop_file, sched_propf_info_new)
 
+def create_inhibit_jobs_file():
+    # Create the INHIBIT_JOBS file
+    with open("INHIBIT_JOBS", "w") as f:
+        pass
+
 
 if __name__ == '__main__':
     sched_prop_file = sys.argv[1]
@@ -94,5 +99,9 @@ if __name__ == '__main__':
     with open('balance.json') as balance_json:
         balance = json.load(balance_json)
 
+    # Check if balance is zero for all products and write the INHIBIT_JOBS file
+    # to prevent the workflow from submitting additional jobs
+    if all(value == 0 for value in balance.values()):
+        create_inhibit_jobs_file()
 
     check_balance(balance, sched_prop_file)

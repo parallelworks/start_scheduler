@@ -1,9 +1,92 @@
 import json
 import os
 from copy import deepcopy
-import joblog
-import webapp
-import alert
+import xml.etree.ElementTree as ET
+import argparse
+
+def joblog2dict(job_log):
+    job_log_f = open(job_log, "r")
+    job_log_lines = [jl.replace("\n","") for jl in job_log_f.readlines()]
+    job_log_f.close()
+
+    job_name = job_log_lines[0].split(" ")[0].split("\t")[1]
+    sim_packet_names = []
+    merge_pname = None
+    #job_dict = {"status": None, "run_time": 0, "split_status": None,
+    #            "merge_status": None, "sim_packets": None}
+    job_dict = {"status": None, "sim_packets": None}
+
+    # Events are logged to the job.log
+    for el in job_log_lines: # el: event line
+        # Type of event
+        # - start, submitted, finish, produced, status and has (has x results)
+        etype = el.split(" ")[1]
+        # Script only logs status (for metering) and produced (for counting demand) events:
+        if etype == "status":
+            # Only changes of status are reported!
+            status = el.split(" ")[-1]
+            # Subject of the status event (job, packet, split or merge)
+            esubject = el.split(" ")[0].split("\t")[1]
+            packet_name = esubject.split("-")[-1]
+
+            # Subject is Job
+            if esubject == job_name:
+                job_dict["status"] = status
+
+            # Subject is a sim packet
+            elif packet_name in sim_packet_names:
+                job_dict["sim_packets"][packet_name]["status"] = status
+
+        elif etype == "produced":
+            nsp = int(el.split(" ")[2])
+            merge_pname = str(nsp+1).zfill(4)
+            # Initialize sim_packets dictionary
+            sim_packet_names = [str(pn).zfill(4) for pn in range(1, nsp + 1)]
+            job_dict["sim_packets"] = dict.fromkeys(sim_packet_names, None)
+            for pn in sim_packet_names:
+                #job_dict["sim_packets"][pn] = {"status": None, "start_time": None, "run_time": 0}
+                job_dict["sim_packets"][pn] = {"status": None}
+
+    return job_dict
+
+
+# Convert info from webapp to job log
+def webapp2dict(webapp_xml):
+    jobs_dict = {}
+    if not os.path.isfile(webapp_xml):
+        return 0
+    tree = ET.parse(webapp_xml)
+    root = tree.getroot()
+    for job in root.iter('job'):
+        for name in job.iter("name"):
+            job_name = name.text
+        job_id = job.attrib["id"]
+
+        jobs_dict[job_id] = {
+            "Name": job_name,
+            "model.product": None,
+            "solver.parallel-cpu": 1,
+            "scheduler.max-licenses-per-batch": None,
+            "scheduler.max-cores-per-batch": None
+        }
+        for prop in job.iter('property'):
+            if prop.attrib["key"] == "model.product":
+                jobs_dict[job_id]["model.product"] = prop.text
+
+            if prop.attrib["key"] == "solver.parallel-cpu":
+                jobs_dict[job_id]["solver.parallel-cpu"] = int(prop.text)
+
+            if prop.attrib["key"] == "solver.parallel-cpu-mkl":
+                jobs_dict[job_id]["solver.parallel-cpu-mkl"] = int(prop.text)
+
+            if prop.attrib["key"] == "scheduler.max-licenses-per-batch":
+                jobs_dict[job_id]["scheduler.max-licenses-per-batch"] = int(prop.text)
+
+            if prop.attrib["key"] == "scheduler.max-cores-per-batch":
+                jobs_dict[job_id]["scheduler.max-cores-per-batch"] = int(prop.text)
+
+    return jobs_dict
+
 
 def get_running_and_queued(job_dict):
     rqc = 0
@@ -30,11 +113,10 @@ def count_core_demand(active_jobs, allow_ps):
 
         # Ignore cases with parallel-cpu > 1 if customer is not using their own resource:
         # FIXME: Only if user is running in PW resources!
-        if job_info["solver.parallel-cpu"] > 1 and allow_ps == 'False':
+        if job_info["solver.parallel-cpu"] > 1 and allow_ps == 'false':
             msg = 'WARNING: DO NOT USE THE PARALLEL SOLVER WHEN RUNNING IN PW CLOUD RESOURCES!!!'
             print(msg, flush = True)
             msg = 'GT job with solver.parallel-cpu > 1 was submitted! This is not permitted! @avidalto'
-            alert.post_to_slack_once(msg)
             continue
 
         # Simulation packets running and queued
@@ -67,12 +149,12 @@ def count_core_demand(active_jobs, allow_ps):
 # Active jobs SHOULD appear in the webapp_xml
 def get_active_jobs(webapp_xml, sched_work_dir):
     jobs_dir = sched_work_dir + "gtdistd/jobs"
-    jobs_dict = webapp.webapp2dict(webapp_xml)
+    jobs_dict = webapp2dict(webapp_xml)
     active_jobs = deepcopy(jobs_dict)
     for job in jobs_dict.keys():
         job_log = jobs_dir + "/" + job + "/job.log"
         if os.path.isfile(job_log):
-            active_jobs[job].update(joblog.joblog2dict(job_log))
+            active_jobs[job].update(joblog2dict(job_log))
         else: # If job has been killed by deleting its job_dir --> No longer active
             del active_jobs[job]
     return active_jobs
@@ -152,4 +234,22 @@ def update_job_records(job_records, active_jobs):
             json.dump(active_jobs, json_file, indent = 4)
 
 
+if __name__ == '__main__':
+    # Create argument parser
+    parser = argparse.ArgumentParser(description='Process command line arguments')
 
+    # Add arguments
+    parser.add_argument('--webapp_xml', type=str, help='Path to webapp XML file')
+    parser.add_argument('--sched_work_dir', type=str, help='Path to scheduler work directory')
+    parser.add_argument('--balance_json', type=str, help='Path to balance JSON file')
+    parser.add_argument('--allow_ps', type=bool, help='Boolean indicating whether to allow PS')
+    
+    args = parser.parse_args()
+
+    with open(args.balance_json) as balance_json:
+        balance = json.load(balance_json)
+
+    active_jobs = get_active_jobs(args.webapp_xml, args.sched_work_dir)
+    active_jobs = remove_jobs_with_no_balance(active_jobs, balance)
+    core_demand = count_core_demand(active_jobs, args.allow_ps)
+    print(core_demand, flush=True)

@@ -71,6 +71,7 @@ date >> ${sched_work_dir}/dates.txt
 # configure_daemon_systemd ${sched_prop_file}
 
 while true; do
+    echo; echo
     # REALOAD INPUTS AND LIBS
     # This facilitate debugging and quick fixes
     source inputs.sh
@@ -80,17 +81,37 @@ while true; do
     check_partition_names
     
     # Writes balance to balance.json file
-    write_balance
+    # FIXME: Uncomment
+    #write_balance # Writes balance.json
 
-    python3 ${APP_DIR}/balance_info.py ${sched_prop_file}
+    # Updates the sched_prop_file to inhibit jobs that checkout products without balance
+    python3 ${APP_DIR}/enforce_balance_in_prop_file.py ${sched_prop_file}
 
-    echo; echo
+    # CORE DEMAND
+    # FIXME Uncomment
+    #curl_wrapper "curl -s http://${resource_privateIp}:8979/jobs/?xml" webapp.xml
+    # FIXME Uncomment
+    python3 get_core_demand.py \
+        --webapp_xml webapp.xml \
+        --balance_json balance.json \
+        --allow_ps ${adv_gt_allow_ps} \
+        --sched_work_dir ${sched_work_dir} > CORE_DEMAND
+
+    export CORE_DEMAND=$(cat CORE_DEMAND)
+    echod "CORE DEMAND: ${CORE_DEMAND}"
+
+    # CORE SUPPLY
     list_sorted_partitions
     get_core_supply
     echod "CORE SUPPLY: ${CORE_SUPPLY}"
-    get_core_demand
-    echod "CORE DEMAND: ${CORE_DEMAND}"
+
     core_overdemand=$((CORE_DEMAND-CORE_SUPPLY))
+    
+    if [ -f "INHIBIT_JOBS" ]; then
+        echod "INHIBITING SUBMISSION OF ADDITIONAL JOBS"
+        core_overdemand=0
+    fi
+
     if [ "${core_overdemand}" -gt 0 ]; then
         echod "CORE OVERDEMAND: ${core_overdemand}"
         satisfy_core_overdemand ${core_overdemand}

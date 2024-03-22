@@ -3,6 +3,23 @@ echod() {
     echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
 }
 
+
+curl_wrapper () {
+    local curl_cmd=$1
+    local out_file=$2
+    while true; do
+	    ${curl_cmd} > ${out_file}.tmp 2> /dev/null && mv ${out_file}.tmp ${out_file}
+        if [ -f ${out_file} ]; then
+            break
+	    else
+            echo "ERROR: File ${out_file} was not produced by command:"
+            echo "       ${curl_cmd}"
+	        sleep 10
+	    fi
+    done
+}
+
+
 # Function to check partition names
 check_partition_names() {
     # Get partition information using sinfo and filter out the header
@@ -47,10 +64,6 @@ get_core_supply() {
         local pjobs=$(squeue --long | grep "\b${partition}\b" | wc -l)
         export CORE_SUPPLY=$((CORE_SUPPLY+pcores*pjobs))
     done < partitions.list
-}
-
-get_core_demand(){
-    export CORE_DEMAND=$(cat CORE_DEMAND)
 }
 
 submit_executor_job() {
@@ -210,5 +223,4 @@ write_balance() {
         echod "Error: File balance.json is missing or empty."
         exit 1
     fi
-fi
 }

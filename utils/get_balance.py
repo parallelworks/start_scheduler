@@ -10,6 +10,7 @@ import json
 
 PW_PLATFORM_HOST = os.environ.get('PW_PLATFORM_HOST')
 PW_API_KEY = os.environ.get('PW_API_KEY')
+# Org ID obtained from here https://cloud.parallel.works/api/v2/organization
 GT_ORGANIZATION_ID = '63572a4c1129281e00477a0c'
 GT_ORGANIZATION_URL = f'https://{PW_PLATFORM_HOST}/api/v2/organization/teams?organization={GT_ORGANIZATION_ID}&key={PW_API_KEY}'
 # FIXME: Get from license server
