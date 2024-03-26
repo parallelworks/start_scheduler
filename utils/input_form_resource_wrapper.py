@@ -390,6 +390,8 @@ def complete_resource_information(inputs_dict):
         {
 	        '__user__': inputs_dict['resource']['username'],
             '__USER__': inputs_dict['resource']['username'],
+            '__user__': os.environ['PW_USER'],
+            '__USER__': os.environ['PW_USER'],
             '__pw_user__': os.environ['PW_USER'],
             '__PW_USER__': os.environ['PW_USER']
         }
@@ -409,7 +411,8 @@ def complete_resource_information(inputs_dict):
         resource_id = inputs_dict['resource']['id']
         resource_info = get_resource_info_with_verified_ip(resource_id)
         public_ip = get_resource_external_ip(resource_info)
-
+        
+        inputs_dict['resource']['group'] = resource_info['group']
         inputs_dict['resource']['publicIp'] = public_ip
         inputs_dict['resource']['username'] = get_resource_user(resource_info)
         inputs_dict['resource']['type'] = resource_info['type']
@@ -466,7 +469,13 @@ def complete_resource_information(inputs_dict):
         inputs_dict, 
         {
             '__workdir__': inputs_dict['resource']['workdir'],
-            '__WORKDIR__': inputs_dict['resource']['workdir']
+            '__WORKDIR__': inputs_dict['resource']['workdir'],
+	        '__user__': inputs_dict['resource']['username'],
+            '__USER__': inputs_dict['resource']['username'],
+            '__user__': os.environ['PW_USER'],
+            '__USER__': os.environ['PW_USER'],
+            '__pw_user__': os.environ['PW_USER'],
+            '__PW_USER__': os.environ['PW_USER']
         }
     )
 
