@@ -30,6 +30,20 @@
         value='27777' 
         help='License vendor port' 
       ></param>
+      <param 
+        name='customer_org_id' 
+        label='ID of the orgazation of the customer' 
+        type='hidden' 
+        value='6601a2bac2750c88894592aa' 
+        help='https://cloud.parallel.works/api/v2/organization' 
+      ></param>
+      <param 
+        name='customer_name' 
+        label='Name of the customer' 
+        type='hidden' 
+        value='gtprod' 
+        help='All customers of the PW managed solution share the same user so we need a customer_name to identify them' 
+      ></param>
     <section name='pwrl_host' type='section' title='Service host' expanded='true'>
       <param 
         name='resource' 

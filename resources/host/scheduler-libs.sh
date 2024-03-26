@@ -209,12 +209,12 @@ configure_daemon_systemd() {
 }
 
 write_balance() {
-    ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_balance.py > balance.json
+    ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_balance.py --customer_name=${customer_name} --customer_org_id=${customer_org_id} > balance.json
     
     ssh_exit_code=$?
     if [ $ssh_exit_code -ne 0 ]; then
         echod "ERROR: Could not obtain balance with command:"
-        echod "ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_balance.py"
+        echod "ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_balance.py --customer_name=${customer_name} --customer_org_id=${customer_org_id}"
         echod "Exiting workflow"
         exit 1
     fi
