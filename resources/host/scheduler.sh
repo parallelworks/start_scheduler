@@ -25,10 +25,12 @@ mkdir -p ${sched_work_dir}/gtdistd ${sched_work_dir}/db ${sched_work_dir}/compou
 ulimit -u
 
 # Create license tunnels
-ssh ${resource_ssh_usercontainer_options} -fN \
+# FIXME: It assumes ~/.ssh/config is present and defines the usercontainer host!
+#        Won't work in onprem resources!
+ssh -J usercontainer ${resource_ssh_usercontainer_options} -fN \
     -L 0.0.0.0:${gt_license_port}:localhost:${gt_license_port} \
     -L 0.0.0.0:${gt_license_vendor_port}:localhost:${gt_license_vendor_port} \
-    usercontainer </dev/null &>/dev/null &
+    flexlm@${gt_license_ip} </dev/null &>/dev/null &
 
 netstat -tuln |  grep "${gt_license_port}\|${gt_license_vendor_port}"
 
