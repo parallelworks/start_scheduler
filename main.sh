@@ -1,5 +1,16 @@
 #!/bin/bash
 
+if [ -z "${workflow_utils_branch}" ]; then
+    # If empty, clone the main default branch
+    git clone https://github.com/parallelworks/workflow-utils.git
+else
+    # If not empty, clone the specified branch
+    git clone -b "$workflow_utils_branch" https://github.com/parallelworks/workflow-utils.git
+fi
+
+mv workflow-utils/* utils/
+rm -rf workflow-utils
+
 source utils/workflow-libs.sh
 
 # Processing resource inputs
@@ -8,16 +19,7 @@ source /etc/profile.d/parallelworks-env.sh
 source /pw/.miniconda3/etc/profile.d/conda.sh
 conda activate
 
-if [ -f "/swift-pw-bin/utils/input_form_resource_wrapper.py" ]; then
-    version=$(cat /swift-pw-bin/utils/input_form_resource_wrapper.py | grep VERSION | cut -d':' -f2)
-    if [ -z "$version" ] || [ "$version" -lt 15 ]; then
-        python utils/input_form_resource_wrapper.py
-    else
-        python /swift-pw-bin/utils/input_form_resource_wrapper.py
-    fi
-else
-    python utils/input_form_resource_wrapper.py
-fi
+python utils/input_form_resource_wrapper.py
 
 if ! [ -f "resources/host/inputs.sh" ]; then
     displayErrorMessage "ERROR - Missing file ./resources/host/inputs.sh. Resource wrapper failed"
