@@ -186,12 +186,14 @@ configure_daemon_systemd() {
     # Following instructions in section 5b of /opt/gtsuite/v2020/distributed/bin/README_Linux.md
     sudo cp ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service /etc/systemd/system/
     sudo cp -r ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service.d /etc/systemd/system/
+    sudo mkdir -p /etc/systemd/system/gtdistd.service.d/
     conf_file=/etc/systemd/system/gtdistd.service.d/override.conf
+    sudo cp ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service.d/override.conf ${conf_file}
+    sudo sed -i "s|/opt/gtsuite/v|${GTIHOME}/v|g" ${conf_file}
     sudo sed -i "s|User=.*|User=${USER}|g" ${conf_file}
     sudo sed -i "s|Environment=GTIHOME=.*|Environment=GTIHOME=${GTIHOME}|g" ${conf_file}
     sudo sed -i "s|Environment=GT_VERSION_HOME=.*|Environment=GT_VERSION_HOME=${GT_VERSION_HOME}|g" ${conf_file}
     sudo sed -i "s|Environment=GT_CONF=.*|Environment=GT_CONF=${prop_file}|g" ${conf_file}
-    # Environment=JRE_HOME=/opt/gtsuite/${dversion}/GTsuite/jre/linux_x86_64
     # Environment=JAVA_OPTS=
     # Environment=DAEMON_OUT=/tmp/gtdistd.out
 
@@ -209,7 +211,11 @@ configure_daemon_systemd() {
 }
 
 write_balance() {
-    ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_balance.py --customer_name=${customer_name} --customer_org_id=${customer_org_id} > balance.json
+    # Customer's name matches the cluster's name because the license server only 
+    # sees <gt-user-name>@mgmt-<pw-user-name>-<cluster-name>-<session-number>  and
+    # we need to support sharing a single PW user account for the "Managed by PW" sol
+    customer_name=$(hostname | cut -d'-' -f3)
+    ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_balance.py --customer_name=${customer_name} --customer_org_id=${customer_org_id} > balance.json  2>/dev/null
     
     ssh_exit_code=$?
     if [ $ssh_exit_code -ne 0 ]; then

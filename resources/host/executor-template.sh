@@ -18,10 +18,8 @@ export GTI_DB_CREATION_OPT=1
 
 exec_work_dir=/var/opt/gtsuite
 exec_prop_file=${exec_work_dir}/gtdistd/gtdistd-exec.properties
-GTIHOME=/opt/gtsuite
+GTIHOME=/software/gtsuite
 GT_VERSION_HOME=${GTIHOME}/${gt_version}
-
-sleep 1200
 
 # ONLY IN THE EXECUTOR.sh
 # add a host pointer to internal IP of the scheduler
@@ -29,12 +27,6 @@ cat /etc/hosts > hosts_mod
 sed -i "s|.*${gt_license_hostname}.*||g" hosts_mod
 echo "${scheduler_internal_ip} ${gt_license_hostname}" >> hosts_mod
 sudo cp hosts_mod /etc/hosts
-
-# Change hostname:
-if [[ ${resource_type} == "pcluster2" ]]; then
-    source /tmp/tags # Reads the "name" tag
-    sudo hostnamectl set-hostname ${name}
-fi
 
 # Start or restart gtdist daemon
 # Make sure user has permissions
@@ -82,6 +74,8 @@ configure_daemon_systemd() {
     sudo sed -i "s|Environment=GTIHOME=.*|Environment=GTIHOME=${GTIHOME}|g" ${conf_file}
     sudo sed -i "s|Environment=GT_VERSION_HOME=.*|Environment=GT_VERSION_HOME=${GT_VERSION_HOME}|g" ${conf_file}
     sudo sed -i "s|Environment=GT_CONF=.*|Environment=GT_CONF=${prop_file}|g" ${conf_file}
+    sudo sed -i "s|Environment=JRE_HOME=.*|Environment=JRE_HOME=${GTIHOME}/${dversion}/GTsuite/jre/11.0.21_9/linux_x86_64|g" ${conf_file}
+
     # Environment=JRE_HOME=/opt/gtsuite/${dversion}/GTsuite/jre/linux_x86_64
     # Environment=JAVA_OPTS=
     # Environment=DAEMON_OUT=/tmp/gtdistd.out

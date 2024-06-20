@@ -6,43 +6,36 @@
         name='gt_license_ip' 
         label='License server IP' 
         type='hidden' 
-        value='34.70.106.187' 
+        value='35.232.90.56' 
         help='External IP address of the license server' 
       ></param>
       <param 
         name='gt_license_hostname' 
         label='License server hostname' 
         type='hidden' 
-        value='gt-license-server' 
+        value='gtcloudlicenseserver-gt-prod' 
         help='Hostname of the license server' 
       ></param>
       <param 
         name='gt_license_port' 
         label='License server port' 
         type='hidden' 
-        value='27005' 
+        value='27014' 
         help='License port' 
       ></param>
       <param 
         name='gt_license_vendor_port' 
         label='License server vendor port' 
         type='hidden' 
-        value='27777' 
+        value='27794' 
         help='License vendor port' 
       ></param>
       <param 
         name='customer_org_id' 
         label='ID of the orgazation of the customer' 
         type='hidden' 
-        value='6602e0d4c2750c88894e08d5' 
+        value='6601a2bac2750c88894592aa' 
         help='https://cloud.parallel.works/api/v2/organization' 
-      ></param>
-      <param 
-        name='customer_name' 
-        label='Name of the customer' 
-        type='hidden' 
-        value='gtbeta' 
-        help='All customers of the PW managed solution share the same user so we need a customer_name to identify them' 
       ></param>
     <section name='pwrl_host' type='section' title='Service host' expanded='true'>
       <param 

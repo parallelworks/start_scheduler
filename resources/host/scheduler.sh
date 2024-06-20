@@ -3,7 +3,7 @@ APP_DIR=$(dirname $0)
 source inputs.sh
 source ${APP_DIR}/scheduler-libs.sh
 
-export GTIHOME=/opt/gtsuite
+export GTIHOME=/software/gtsuite
 GT_VERSION_HOME=${GTIHOME}/${gt_version}
 export PATH=${GTIHOME}/bin/:${PATH}
 export PATH=${GT_VERSION_HOME}/GTsuite/bin/linux_x86_64/:${PATH}
@@ -12,6 +12,7 @@ export PATH=${GT_VERSION_HOME}/GTsuite/bin/linux_x86_64/:${PATH}
 # Persistent disk is mounted in the sched_work_dir!
 export sched_work_dir=/var/opt/gtsuite/
 export exec_work_dir=/var/opt/gtsuite/
+
 
 sudo mkdir -p ${sched_work_dir} ${GTIHOME}
 
@@ -67,12 +68,22 @@ date >> ${sched_work_dir}/dates.txt
 
 
 # FIXME: Uncomment
-# start_gt_db
+start_gt_db
+if ! start_gt_db; then
+    echo "ERROR: Failed to start GT database" >&2
+    exit 1
+fi
 
 # FIXME: Uncomment
-# configure_daemon_systemd ${sched_prop_file}
+configure_daemon_systemd ${sched_prop_file}
+if ! configure_daemon_systemd ${sched_prop_file}; then
+    echo "ERROR: Failed to configure and start daemon systemd with ${sched_prop_file}" >&2
+    cat /tmp/gtdistd.out >&2
+    exit 1
+fi
 
 while true; do
+    sleep ${adv_pw_ds_cycle}
     echo; echo
     # REALOAD INPUTS AND LIBS
     # This facilitate debugging and quick fixes
@@ -84,14 +95,14 @@ while true; do
     
     # Writes balance to balance.json file
     # FIXME: Uncomment
-    #write_balance # Writes balance.json
+    write_balance # Writes balance.json
 
     # Updates the sched_prop_file to inhibit jobs that checkout products without balance
     python3 ${APP_DIR}/enforce_balance_in_prop_file.py ${sched_prop_file}
 
     # CORE DEMAND
     # FIXME Uncomment
-    #curl_wrapper "curl -s http://${resource_privateIp}:8979/jobs/?xml" webapp.xml
+    curl_wrapper "curl -s http://${resource_privateIp}:8979/jobs/?xml" webapp.xml
     # FIXME Uncomment
     python3 get_core_demand.py \
         --webapp_xml webapp.xml \
@@ -118,107 +129,6 @@ while true; do
         echod "CORE OVERDEMAND: ${core_overdemand}"
         satisfy_core_overdemand ${core_overdemand}
     fi
-    squeue --long
-    sleep ${adv_pw_ds_cycle}
+    # The tail is to skip the date
+    squeue --long | tail -n +2
 done
-
-
-exit 0
-
-#!/bin/bash
-sleep 
-
-
-# FIXME: This should be in the image!
-sudo pip3 install requests
-
-sleep 3
-secure_curl () {
-    local curl_cmd=$1
-    local out_file=$2
-    while true; do
-	    ${curl_cmd} > ${out_file}.tmp 2> /dev/null && mv ${out_file}.tmp ${out_file}
-        if [ -f ${out_file} ]; then
-            break
-	    else
-            echo "ERROR: File ${out_file} was not produced by command:"
-            echo "       ${curl_cmd}"
-	        sleep 10
-	    fi
-    done
-}
-
-echo; echo INPUTS:
-echo $@; echo
-
-exec_pools=$1
-version=$2 # v2020
-sum_serv=$3
-ds_cycle=$4
-od_pct=$5
-api_key=$6 #4c1bb8ff47a0f42b96ebb670dcb09418 (not a real API key)
-pf_dir=$7 # Properties files directory
-cloud=$8
-stream_port=${9}
-pw_dir=${10}
-PARSL_CLIENT_HOST=${11}
-allow_ps=${12}
-
-
-apps_dir=$(dirname $0)
-
-
-pw_url="https://${PARSL_CLIENT_HOST}"
-
-sched_ip_ext=$(curl -s ifconfig.me) # FIXME: Get internal IP
-sched_ip_int=$(hostname -I  | cut -d' ' -f1 | sed "s/ //g")
-
-
-# Create input for main.py script
-create_ms_input () {
-    echo "webapp_xml=webapp.xml" > ${ms_input}
-    echo "sched_work_dir=${sched_work_dir}" >> ${ms_input}
-    echo "exec_work_dir=${exec_work_dir}" >> ${ms_input}
-    echo "version=${version}" >> ${ms_input}
-    echo "pool_names=${exec_pools}" >> ${ms_input}
-    echo "pool_info_json=pools_info.json" >> ${ms_input}
-    echo "gtdist_exec_pfile=${exec_prop_file}" >> ${ms_input}
-    echo "od_pct=${od_pct}" >> ${ms_input}
-    echo "cloud=${cloud}" >> ${ms_input}
-    echo "api_key=${api_key}" >> ${ms_input}
-    echo "sched_ip_int=${sched_ip_int}" >> ${ms_input}
-    echo "lic_hostname=${lic_hostname}" >> ${ms_input}
-    echo "pw_url=${pw_url}" >> ${ms_input}
-    echo "allow_ps=${allow_ps}" >> ${ms_input}
-}
-
-ms_input=main_input.txt
-while true; do
-    sleep ${ds_cycle}
-    secure_curl "curl -s ${pw_url}/api/resources?key=${api_key}" pools_info.json
-    secure_curl "curl -s http://${sched_ip_int}:8979/jobs/?xml" webapp.xml
-    echo; date
-    create_ms_input
-    python3 ${apps_dir}/sched/main.py ${ms_input}
-    sudo sed -i "s|^v|#v|g" /usr/lib/tmpfiles.d/tmp.conf
-done
-
-# create the license node tunnel
-# ssh -L 27005:localhost:27005 localhost -fNT
-# netstat -tulpn
-# create the executor pool tunnel(s)
-#localport=64027
-# setsid ssh -L $localport:localhost:$localport localhost -fNT
-
-# To test:
-# yum install glibc.i686
-# yum install libgcc_s.so.1
-
-# RUN FROM USER NODE:
-# Only needs to run once per user node --> User nodes may have multiple user containers
-# LICENSE_SERVER=35.224.78.64
-# LICENSE_USER=flexlm
-# LICENSE_PORT=27005 27777
-
-# autossh -M 0 -f -N -L $LICENSE_PORT:localhost:$LICENSE_PORT $LICENSE_USER@$LICENSE_SERVER
-# autossh -M 0 -f -N -L $LICENSE_PORT:localhost:$LICENSE_PORT $LICENSE_USER@$LICENSE_SERVER

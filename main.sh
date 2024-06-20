@@ -35,7 +35,7 @@ echo "Start Scheduler Submitted"
 
 while true; do
     # Check if the screen session exists on the remote host
-    if ssh "${resource_publicIp}" screen -list | grep gt-scheduler; then
+    if ssh "${resource_publicIp}" screen -list | grep gt-scheduler > /dev/null 2>&1; then
         echo "$(date) gt-scheduler session is running on ${resource_publicIp}" >> screen-session.log 2>&1
     else
         echo "$(date) gt-scheduler session is not running on ${resource_publicIp}" >> screen-session.log 2>&1
