@@ -70,7 +70,6 @@ submit_executor_job() {
     local partition=$1
     local job_name=$2
     local pcores=$3
-    local exec_prop_file_template=${PWD}/properties_files/gtdistd-exec-${gt_version}.properties
 
     local slurm_job_dir="${PWD}/slurm-jobs/$(date +%Y-%m-%d)"
     mkdir -p ${slurm_job_dir}
@@ -83,7 +82,7 @@ submit_executor_job() {
         -e "s|__RESOURCE_TYPE__|${resource_type}|g" \
         -e "s|__GT_VERSION__|${gt_version}|g" \
         -e "s|__SCHEDULER_INTERNAL_IP__|${resource_privateIp}|g" \
-        -e "s|__LICENSE_HOSTNAME__|${gt_license_hostname}|g" \
+        -e "s|__GT_LICENSE_HOSTNAME__|${gt_license_hostname}|g" \
         -e "s|__EXEC_PROP_FILE_TEMPLATE__|${exec_prop_file_template}|g" \
         "${APP_DIR}/executor-template.sh" > "${slurm_job_dir}/${job_name}.sh"
 
@@ -123,7 +122,7 @@ satisfy_core_overdemand() {
         for i in $(seq 1 "${njobs}"); do
             job_name="${SECONDS}-${partition}-${i}"
             echod "Submitting job ${job_name} to partition ${partition} with ${pcores} cores"
-            submit_executor_job ${partition} ${job_name}
+            submit_executor_job ${partition} ${job_name} ${pcores}
             core_overdemand=$((core_overdemand-pcores))
         done
         sleep 1
@@ -144,7 +143,7 @@ satisfy_core_overdemand() {
         if [ "${pjobs}" -lt "${max_nodes}" ]; then
             job_name="${SECONDS}-${partition}-remainder"
             echod "Submitting job ${job_name} to partition ${partition} with ${pcores} cores"
-            submit_executor_job ${partition} ${job_name}
+            submit_executor_job ${partition} ${job_name} ${pcores}
             core_overdemand=$((core_overdemand-pcores))
             break
         fi

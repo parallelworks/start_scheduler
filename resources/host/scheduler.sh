@@ -37,20 +37,25 @@ netstat -tuln |  grep "${gt_license_port}\|${gt_license_vendor_port}"
 
 
 # CREATE PROPERTIES FILES
-exec_prop_file=${sched_work_dir}/gtdistd/gtdistd-exec.properties
+exec_prop_file_template=${PWD}/gtdistd-exec-template.properties
 sched_prop_file=${sched_work_dir}/gtdistd/gtdistd-sched.properties
 
 # Prepare executor properties file (except core-count and priority)
 pf_dir=properties_files
-# cp ${GT_VERSION_HOME}/distributed/config-samples/gtdistd-exec.properties ${exec_prop_file}
-cp ${pf_dir}/gtdistd-exec-${gt_version}.properties ${exec_prop_file}
-sed -i "s|^GTDistributed.work-dir.*|GTDistributed.work-dir = ${exec_work_dir}/gtdistd|g" ${exec_prop_file}
-sed -i "s|^GTDistributed.license-file.*|GTDistributed.license-file = ${resource_privateIp}:${gt_license_port}|g" ${exec_prop_file}
-sed -i "s|^GTDistributed.client.hostname.*|GTDistributed.client.hostname = ${resource_privateIp}|g" ${exec_prop_file}
-sed -i 's/\r//' ${exec_prop_file}
+# cp ${GT_VERSION_HOME}/distributed/config-samples/gtdistd-exec.properties ${exec_prop_file_template}
+cp ${pf_dir}/gtdistd-exec-${gt_version}.properties ${exec_prop_file_template}
+sed -i "s|^GTDistributed.work-dir.*|GTDistributed.work-dir = ${exec_work_dir}/gtdistd|g" ${exec_prop_file_template}
+sed -i "s|^GTDistributed.license-file.*|GTDistributed.license-file = ${resource_privateIp}:${gt_license_port}|g" ${exec_prop_file_template}
+sed -i "s|^GTDistributed.client.hostname.*|GTDistributed.client.hostname = ${resource_privateIp}|g" ${exec_prop_file_template}
+sed -i 's/\r//' ${exec_prop_file_template}
 
 # Prepare scheduler properties file
-cp ${pf_dir}/gtdistd-sched-${gt_version}.properties ${sched_prop_file}
+template_sched_prop_file="${pf_dir}/gtdistd-sched-${gt_version}.properties"
+if [[ ! -f "${template_sched_prop_file}" ]]; then
+    echod "ERROR: File ${template_sched_prop_file} does not exist. Exiting workflow." >&2
+    exit 1
+fi
+cp ${template_sched_prop_file} ${sched_prop_file}
 sed -i "s|^GTDistributed.work-dir.*|GTDistributed.work-dir = ${sched_work_dir}/gtdistd|g" ${sched_prop_file}
 if [[ ${adv_gt_sum_serv} == "True" ]]; then
     echod Activating summary service
@@ -70,14 +75,14 @@ date >> ${sched_work_dir}/dates.txt
 # FIXME: Uncomment
 start_gt_db
 if ! start_gt_db; then
-    echo "ERROR: Failed to start GT database" >&2
+    echod "ERROR: Failed to start GT database. Exiting workflow." >&2
     exit 1
 fi
 
 # FIXME: Uncomment
 configure_daemon_systemd ${sched_prop_file}
 if ! configure_daemon_systemd ${sched_prop_file}; then
-    echo "ERROR: Failed to configure and start daemon systemd with ${sched_prop_file}" >&2
+    echod "ERROR: Failed to configure and start daemon systemd with ${sched_prop_file}. Exiting workflow." >&2
     cat /tmp/gtdistd.out >&2
     exit 1
 fi

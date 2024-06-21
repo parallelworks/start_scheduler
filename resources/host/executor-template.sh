@@ -30,8 +30,7 @@ sudo cp hosts_mod /etc/hosts
 
 # Start or restart gtdist daemon
 # Make sure user has permissions
-sudo chown ${USER}: ${GTIHOME} -R
-chmod u+w ${GTIHOME} -R
+sudo mkdir -p ${sched_work_dir}
 sudo chown ${USER}: ${exec_work_dir} -R
 chmod u+w ${exec_work_dir} -R
 
@@ -63,18 +62,21 @@ else
     dversion=${gt_version}
 fi
 
+
 configure_daemon_systemd() {
     echo Configuring daemon
     local prop_file=$1
     # Following instructions in section 5b of /opt/gtsuite/v2020/distributed/bin/README_Linux.md
     sudo cp ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service /etc/systemd/system/
     sudo cp -r ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service.d /etc/systemd/system/
+    sudo mkdir -p /etc/systemd/system/gtdistd.service.d/
     conf_file=/etc/systemd/system/gtdistd.service.d/override.conf
+    sudo cp ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service.d/override.conf ${conf_file}
+    sudo sed -i "s|/opt/gtsuite/v|${GTIHOME}/v|g" ${conf_file}
     sudo sed -i "s|User=.*|User=${USER}|g" ${conf_file}
     sudo sed -i "s|Environment=GTIHOME=.*|Environment=GTIHOME=${GTIHOME}|g" ${conf_file}
     sudo sed -i "s|Environment=GT_VERSION_HOME=.*|Environment=GT_VERSION_HOME=${GT_VERSION_HOME}|g" ${conf_file}
     sudo sed -i "s|Environment=GT_CONF=.*|Environment=GT_CONF=${prop_file}|g" ${conf_file}
-    sudo sed -i "s|Environment=JRE_HOME=.*|Environment=JRE_HOME=${GTIHOME}/${dversion}/GTsuite/jre/11.0.21_9/linux_x86_64|g" ${conf_file}
 
     # Environment=JRE_HOME=/opt/gtsuite/${dversion}/GTsuite/jre/linux_x86_64
     # Environment=JAVA_OPTS=
@@ -98,8 +100,8 @@ configure_daemon_systemd() {
 }
 
 # FIXME DELETE
-sleep 60
 configure_daemon_systemd ${exec_prop_file}
+sleep 600
 
 
 # Wait for the sim file to appear (sim_found) and for ALL sim files to disappear before exiting
