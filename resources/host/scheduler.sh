@@ -33,8 +33,14 @@ ssh -J usercontainer ${resource_ssh_usercontainer_options} -fN \
     -L 0.0.0.0:${gt_license_vendor_port}:localhost:${gt_license_vendor_port} \
     flexlm@${gt_license_ip} </dev/null &>/dev/null &
 
+
 netstat -tuln |  grep "${gt_license_port}\|${gt_license_vendor_port}"
 
+
+# Add lic server's hostname to loopback address
+cat /etc/hosts > hosts_mod
+echo "127.0.0.1 ${gt_license_hostname}" >> hosts_mod
+sudo cp hosts_mod /etc/hosts
 
 # CREATE PROPERTIES FILES
 exec_prop_file_template=${PWD}/gtdistd-exec-template.properties
@@ -45,7 +51,7 @@ pf_dir=properties_files
 # cp ${GT_VERSION_HOME}/distributed/config-samples/gtdistd-exec.properties ${exec_prop_file_template}
 cp ${pf_dir}/gtdistd-exec-${gt_version}.properties ${exec_prop_file_template}
 sed -i "s|^GTDistributed.work-dir.*|GTDistributed.work-dir = ${exec_work_dir}/gtdistd|g" ${exec_prop_file_template}
-sed -i "s|^GTDistributed.license-file.*|GTDistributed.license-file = ${resource_privateIp}:${gt_license_port}|g" ${exec_prop_file_template}
+sed -i "s|^GTDistributed.license-file.*|GTDistributed.license-file = ${gt_license_port}@${resource_privateIp}|g" ${exec_prop_file_template}
 sed -i "s|^GTDistributed.client.hostname.*|GTDistributed.client.hostname = ${resource_privateIp}|g" ${exec_prop_file_template}
 sed -i 's/\r//' ${exec_prop_file_template}
 
@@ -71,20 +77,27 @@ fi
 # Start or restart gtdist daemon
 date >> ${sched_work_dir}/dates.txt
 
-
-# FIXME: Uncomment
 start_gt_db
 if ! start_gt_db; then
     echod "ERROR: Failed to start GT database. Exiting workflow." >&2
     exit 1
 fi
 
-# FIXME: Uncomment
 configure_daemon_systemd ${sched_prop_file}
 if ! configure_daemon_systemd ${sched_prop_file}; then
     echod "ERROR: Failed to configure and start daemon systemd with ${sched_prop_file}. Exiting workflow." >&2
     cat /tmp/gtdistd.out >&2
     exit 1
+fi
+
+# Connect webapp
+#ssh ${resource_ssh_usercontainer_options} -fN -R 0.0.0.0:${resource_ports}:localhost:8979 usercontainer
+#ssh ${resource_ssh_usercontainer_options} usercontainer "${pw_job_dir}/utils/notify.sh Running"
+
+if [[ "${gt_version}" == "v2024" ]]; then
+    get_core_demand_script="get_core_demand_v2024.py"
+else
+    get_core_demand_script="get_core_demand.py"
 fi
 
 while true; do
@@ -99,17 +112,14 @@ while true; do
     check_partition_names
     
     # Writes balance to balance.json file
-    # FIXME: Uncomment
     write_balance # Writes balance.json
 
     # Updates the sched_prop_file to inhibit jobs that checkout products without balance
     python3 ${APP_DIR}/enforce_balance_in_prop_file.py ${sched_prop_file}
 
     # CORE DEMAND
-    # FIXME Uncomment
     curl_wrapper "curl -s http://${resource_privateIp}:8979/jobs/?xml" webapp.xml
-    # FIXME Uncomment
-    python3 get_core_demand.py \
+    python3 ${get_core_demand_script} \
         --webapp_xml webapp.xml \
         --balance_json balance.json \
         --allow_ps ${adv_gt_allow_ps} \

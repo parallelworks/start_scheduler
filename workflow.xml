@@ -45,6 +45,12 @@
         hideUserWorkspace='true' 
         help='Resource to host the service'>
       </param>
+      <param 
+        name='nports' 
+        label='Number of Ports to Reserve' 
+        type='hidden' 
+        value='1'  
+      ></param> 
     </section>
     <section name='gt' type='section' title='GT Inputs' expanded='true'>
       <param 

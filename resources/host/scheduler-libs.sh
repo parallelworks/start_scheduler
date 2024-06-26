@@ -84,6 +84,7 @@ submit_executor_job() {
         -e "s|__SCHEDULER_INTERNAL_IP__|${resource_privateIp}|g" \
         -e "s|__GT_LICENSE_HOSTNAME__|${gt_license_hostname}|g" \
         -e "s|__EXEC_PROP_FILE_TEMPLATE__|${exec_prop_file_template}|g" \
+        -e "s|__SSH_CONFIG_COMPUTE__|${ssh_config_compute}|g" \
         "${APP_DIR}/executor-template.sh" > "${slurm_job_dir}/${job_name}.sh"
 
     # Submit job to queue

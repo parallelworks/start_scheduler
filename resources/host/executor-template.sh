@@ -13,6 +13,7 @@ gt_version=__GT_VERSION__
 scheduler_internal_ip=__SCHEDULER_INTERNAL_IP__
 gt_license_hostname=__GT_LICENSE_HOSTNAME__
 exec_prop_file_template=__EXEC_PROP_FILE_TEMPLATE__
+ssh_config_compute=__SSH_CONFIG_COMPUTE__
 
 export GTI_DB_CREATION_OPT=1
 
@@ -25,8 +26,9 @@ GT_VERSION_HOME=${GTIHOME}/${gt_version}
 # add a host pointer to internal IP of the scheduler
 cat /etc/hosts > hosts_mod
 sed -i "s|.*${gt_license_hostname}.*||g" hosts_mod
-echo "${scheduler_internal_ip} ${gt_license_hostname}" >> hosts_mod
+echo "${resource_privateIp} ${gt_license_hostname}" >> hosts_mod
 sudo cp hosts_mod /etc/hosts
+
 
 # Start or restart gtdist daemon
 # Make sure user has permissions
@@ -99,10 +101,7 @@ configure_daemon_systemd() {
     # $GTIHOME/${dversion}/distributed/bin/gtdistdconfig.sh
 }
 
-# FIXME DELETE
 configure_daemon_systemd ${exec_prop_file}
-sleep 600
-
 
 # Wait for the sim file to appear (sim_found) and for ALL sim files to disappear before exiting
 # FIXME What if simulation is halted? 1cyl_3.hlt

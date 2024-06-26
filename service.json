@@ -1,7 +1,7 @@
 {
-  "URL": "",
+  "URL": "/me",
   "PORT": "",
-  "SLUG": "",
-  "JOB_STATUS": "",
+  "SLUG": "jobs/?xml",
+  "JOB_STATUS": "Initializing",
   "ERROR_MESSAGE": ""
 }

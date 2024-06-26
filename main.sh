@@ -28,9 +28,17 @@ fi
 source resources/host/inputs.sh
 
 
+#ssh -J usercontainer ${resource_ssh_usercontainer_options} -fN \
+#    -L 0.0.0.0:${gt_license_port}:localhost:${gt_license_port} \
+#    -L 0.0.0.0:${gt_license_vendor_port}:localhost:${gt_license_vendor_port} \
+#    flexlm@${gt_license_ip} </dev/null &>/dev/null &
+
 cluster_rsync_exec
 
 echo "Start Scheduler Submitted"
+
+# Preparing service.json to connect to webapp
+#sed -i "s|.*PORT.*|    \"PORT\": \"${resource_ports}\",|" service.json
 
 
 while true; do
