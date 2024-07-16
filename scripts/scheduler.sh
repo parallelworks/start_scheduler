@@ -204,6 +204,10 @@ else
     dversion=${version}
 fi
 
+if [[ "${dversion}" == "v2024" ]]; then
+    cp ${apps_dir}/sched/joblog-v2024.py ${apps_dir}/sched/joblog.py
+fi
+
 #$GTIHOME/v2020/distributed/bin/gtdistd.sh -c <config-file>
 # USE LATEST VERSION!
 configure_daemon_systemd() {
