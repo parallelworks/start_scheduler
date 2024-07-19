@@ -31,7 +31,7 @@ ulimit -u
 ssh -J usercontainer ${resource_ssh_usercontainer_options} -fN \
     -L 0.0.0.0:${gt_license_port}:localhost:${gt_license_port} \
     -L 0.0.0.0:${gt_license_vendor_port}:localhost:${gt_license_vendor_port} \
-    flexlm@${gt_license_ip} </dev/null &>/dev/null &
+    ${gt_license_user}@${gt_license_ip} </dev/null &>/dev/null &
 
 
 netstat -tuln |  grep "${gt_license_port}\|${gt_license_vendor_port}"

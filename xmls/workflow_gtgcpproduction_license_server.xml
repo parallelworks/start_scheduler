@@ -6,35 +6,35 @@
         name='gt_license_user' 
         label='License server IP' 
         type='hidden' 
-        value='ec2-user' 
+        value='flexlm' 
         help='User name of the license server' 
       ></param>
       <param 
         name='gt_license_ip' 
         label='License server IP' 
         type='hidden' 
-        value='3.14.18.97' 
+        value='35.232.90.56' 
         help='External IP address of the license server' 
       ></param>
       <param 
         name='gt_license_hostname' 
         label='License server hostname' 
         type='hidden' 
-        value='gtlicenseserver-development' 
+        value='gtcloudlicenseserver-gt-prod' 
         help='Hostname of the license server' 
       ></param>
       <param 
         name='gt_license_port' 
         label='License server port' 
         type='hidden' 
-        value='27032' 
+        value='27014' 
         help='License port' 
       ></param>
       <param 
         name='gt_license_vendor_port' 
         label='License server vendor port' 
         type='hidden' 
-        value='27812' 
+        value='27794' 
         help='License vendor port' 
       ></param>
       <param 
