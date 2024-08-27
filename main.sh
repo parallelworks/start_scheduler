@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo 1 ${sshcmd}
+
 if [ -z "${workflow_utils_branch}" ]; then
     # If empty, clone the main default branch
     git clone https://github.com/parallelworks/workflow-utils.git
@@ -12,12 +14,17 @@ mv workflow-utils/* utils/
 rm -rf workflow-utils
 
 source utils/workflow-libs.sh
+echo 2 ${sshcmd}
+
 
 # Processing resource inputs
 source /etc/profile.d/parallelworks.sh
 source /etc/profile.d/parallelworks-env.sh
 source /pw/.miniconda3/etc/profile.d/conda.sh
 conda activate
+
+echo 3 ${sshcmd}
+
 
 python utils/input_form_resource_wrapper.py
 
@@ -27,8 +34,15 @@ fi
 
 source resources/host/inputs.sh
 
+echo 4 ${sshcmd}
+
+
 cluster_rsync_exec
 
+
+echo 5 ${sshcmd}
+
+exit 1
 echo "Start Scheduler Submitted"
 
 # Preparing service.json to connect to webapp
