@@ -27,7 +27,7 @@ fi
 
 source resources/host/inputs.sh
 #export sshcmd="ssh -A -o StrictHostKeyChecking=no ${resource_publicIp}"
-
+export sshcmd="ssh -o StrictHostKeyChecking=no ${resource_publicIp}"
 cluster_rsync_exec
 
 echo "Start Scheduler Submitted"
