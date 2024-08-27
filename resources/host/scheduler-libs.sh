@@ -214,7 +214,7 @@ write_balance() {
     # Customer's name matches the cluster's name because the license server only 
     # sees <gt-user-name>@mgmt-<pw-user-name>-<cluster-name>-<session-number>  and
     # we need to support sharing a single PW user account for the "Managed by PW" sol
-    customer_name=$(hostname | cut -d'-' -f3)
+    customer_name=$(hostname | cut -d'-' -f2)
     ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_balance.py --customer_name=${customer_name} --customer_org_id=${customer_org_id} > balance.json  2>/dev/null
     
     ssh_exit_code=$?
