@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -x
 echo 1 ${sshcmd}
 
 if [ -z "${workflow_utils_branch}" ]; then
