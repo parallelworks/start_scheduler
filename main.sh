@@ -42,6 +42,8 @@ cluster_rsync_exec
 
 echo 5 ${sshcmd}
 
+sleep 10
+
 exit 1
 echo "Start Scheduler Submitted"
 
