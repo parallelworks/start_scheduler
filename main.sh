@@ -26,10 +26,6 @@ if ! [ -f "resources/host/inputs.sh" ]; then
 fi
 
 source resources/host/inputs.sh
-# Need to forward agent to access license server from controller
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/pw_id_rsa
-export sshcmd="ssh -A -o StrictHostKeyChecking=no ${resource_publicIp}"
 
 path_to_rsync_exec_sh=resources/host/launch_scheduler.sh
 chmod +x ${path_to_rsync_exec_sh}
@@ -46,6 +42,10 @@ echo "rsync -avzq --rsync-path="mkdir -p ${resource_jobdir} && rsync " ${origin}
 rsync -avzq --rsync-path="mkdir -p ${resource_jobdir} && rsync " ${origin} ${destination}
 # Execute the script
 echo "ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh"
+
+# Need to forward agent to access license server from controller
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/pw_id_rsa
 ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh
 
 if [ $? -ne 0 ]; then
