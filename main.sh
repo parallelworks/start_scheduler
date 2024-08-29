@@ -27,6 +27,7 @@ fi
 
 source resources/host/inputs.sh
 
+sshcmd="ssh -o StrictHostKeyChecking=no ${resource_publicIp}"
 cluster_rsync_exec
 
 # Need to forward agent to access license server from controller
