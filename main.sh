@@ -46,7 +46,7 @@ echo "ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}
 # Need to forward agent to access license server from controller
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/pw_id_rsa
-ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh
+ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} /home/gtproduction/pw/jobs/gt_scheduler/00031/host/cluster_rsync_exec.sh
 
 if [ $? -ne 0 ]; then
     echo "ERROR: failed to run launch_scheduler.sh failed"
