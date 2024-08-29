@@ -29,6 +29,7 @@ source resources/host/inputs.sh
 # Need to forward agent to access license server from controller
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/pw_id_rsa
+sleep 3
 export sshcmd="ssh -A -o StrictHostKeyChecking=no ${resource_publicIp}"
 
 cluster_rsync_exec
