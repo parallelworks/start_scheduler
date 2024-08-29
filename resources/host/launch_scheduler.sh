@@ -20,6 +20,7 @@ fi
 # Create license tunnels
 # FIXME: It assumes ~/.ssh/config is present and defines the usercontainer host!
 #        Won't work in onprem resources!
+set -x
 ssh -J usercontainer ${resource_ssh_usercontainer_options} -fN \
     -L 0.0.0.0:${gt_license_port}:localhost:${gt_license_port} \
     -L 0.0.0.0:${gt_license_vendor_port}:localhost:${gt_license_vendor_port} \
