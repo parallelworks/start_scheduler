@@ -26,32 +26,12 @@ if ! [ -f "resources/host/inputs.sh" ]; then
 fi
 
 source resources/host/inputs.sh
-
-path_to_rsync_exec_sh=resources/host/launch_scheduler.sh
-chmod +x ${path_to_rsync_exec_sh}
-resource_dir=$(dirname ${path_to_rsync_exec_sh})
-resource_label=$(basename ${resource_dir})
-# Load resource inputs
-echo "export PW_RESOURCE_DIR=${PWD}/${resource_dir}" >> ${resource_dir}/inputs.sh
-# Copy workflow utils to resource directory
-cp utils/*  ${resource_dir}
-# Rsync resource directory in user space to job directory in the resource
-origin=${resource_dir}/
-destination=${resource_publicIp}:${resource_jobdir}/${resource_label}/
-echo "rsync -avzq --rsync-path="mkdir -p ${resource_jobdir} && rsync " ${origin} ${destination}"
-rsync -avzq --rsync-path="mkdir -p ${resource_jobdir} && rsync " ${origin} ${destination}
-# Execute the script
-echo "ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh"
-
 # Need to forward agent to access license server from controller
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/pw_id_rsa
-ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} /home/gtproduction/pw/jobs/gt_scheduler/00031/host/cluster_rsync_exec.sh
+export sshcmd="ssh -A -o StrictHostKeyChecking=no ${resource_publicIp}"
 
-if [ $? -ne 0 ]; then
-    echo "ERROR: failed to run launch_scheduler.sh failed"
-    return 1
-fi
+cluster_rsync_exec
 
 echo "Start Scheduler Submitted"
 
