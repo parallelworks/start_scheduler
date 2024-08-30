@@ -27,13 +27,26 @@ fi
 
 source resources/host/inputs.sh
 
-sshcmd="ssh -o StrictHostKeyChecking=no ${resource_publicIp}"
-cluster_rsync_exec
+# Create script to estblish tunnel form the controller node to the license server
+bash create_license_tunnel_script.sh "resources/host/license_tunnel.sh"
 
+# Create remote job directory
+cluster_rsync
+
+# Create license tunnel
+echo; echo
 # Need to forward agent to access license server from controller
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/pw_id_rsa
+echo "ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/license_tunnel.sh"
+ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/license_tunnel.sh
+if [ ${return_code} -ne 0 ]; then
+    bash cancel.sh
+    exit 1
+fi
 
+# Launch scheduler
+echo; echo
 echo "ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh"
 ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh
 
