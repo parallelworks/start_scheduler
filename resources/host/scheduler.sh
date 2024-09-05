@@ -3,6 +3,12 @@ APP_DIR=$(dirname $0)
 source inputs.sh
 source ${APP_DIR}/scheduler-libs.sh
 
+if ! [ -d "/software" ]; then
+    echo; echo
+    echo "ERROR: Directory /software does not exist. Exiting."
+    exit 1
+fi
+
 export GTIHOME=/software/gtsuite
 GT_VERSION_HOME=${GTIHOME}/${gt_version}
 export PATH=${GTIHOME}/bin/:${PATH}
