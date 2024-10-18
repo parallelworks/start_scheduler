@@ -1,4 +1,6 @@
 #!/bin/bash
+source inputs.sh
+ssh-keygen -R ${pwrl_host_resource_publicIp}
 
 if [ -z "${workflow_utils_branch}" ]; then
     # If empty, clone the main default branch
@@ -26,7 +28,6 @@ if ! [ -f "resources/host/inputs.sh" ]; then
 fi
 
 source resources/host/inputs.sh
-ssh-keygen -R ${resource_publicIp}
 
 # Create script to estblish tunnel form the controller node to the license server
 bash create_license_tunnel_script.sh "resources/host/license_tunnel.sh"
