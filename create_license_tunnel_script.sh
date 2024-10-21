@@ -7,7 +7,6 @@ echo '#!/bin/bash' > ${tunnel_script}
 chmod +x ${tunnel_script}
 cat resources/host/inputs.sh >> ${tunnel_script}
 cat >> ${tunnel_script} <<HERE
-sudo dnf install autossh -y
 
 # Check if SSH access is available using the jumphost
 ssh -q -o BatchMode=yes -J usercontainer ${resource_ssh_usercontainer_options} ${gt_license_user}@${gt_license_ip} exit
