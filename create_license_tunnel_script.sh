@@ -18,8 +18,8 @@ if [ \$? -ne 0 ]; then
     exit 1
 fi
 
-
-autossh -M 0 usercontainer ${resource_ssh_usercontainer_options} -fN \
+echo "Creating tunnel with autossh"
+autossh -M 0 -J usercontainer ${resource_ssh_usercontainer_options} -fN \
     -L 0.0.0.0:${gt_license_port}:localhost:${gt_license_port} \
     -L 0.0.0.0:${gt_license_vendor_port}:localhost:${gt_license_vendor_port} \
     ${gt_license_user}@${gt_license_ip} </dev/null &>/dev/null &
