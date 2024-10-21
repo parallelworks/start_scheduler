@@ -101,6 +101,13 @@ while true; do
     # This facilitate debugging and quick fixes
     source inputs.sh
     source ${APP_DIR}/scheduler-libs.sh
+
+    # Check if either of the ports are open and listening
+    # Check if both ports are open and listening
+    if ! ( netstat -tuln | grep -q "${gt_license_port}" && netstat -tuln | grep -q "${gt_license_vendor_port}" ); then
+        echo "License tunnel is disconnected. Creating tunnel again."
+        bash ${APP_DIR}/license_tunnel.sh 
+    fi
     
     # Check every time in case new partitions are added
     check_partition_names

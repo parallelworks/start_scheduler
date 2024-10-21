@@ -7,6 +7,8 @@ echo '#!/bin/bash' > ${tunnel_script}
 chmod +x ${tunnel_script}
 cat resources/host/inputs.sh >> ${tunnel_script}
 cat >> ${tunnel_script} <<HERE
+sudo dnf install autossh -y
+
 # Check if SSH access is available using the jumphost
 ssh -q -o BatchMode=yes -J usercontainer ${resource_ssh_usercontainer_options} ${gt_license_user}@${gt_license_ip} exit
 
@@ -19,7 +21,16 @@ if [ \$? -ne 0 ]; then
 fi
 
 echo "Creating tunnel with autossh"
-autossh -M 0 -J usercontainer ${resource_ssh_usercontainer_options} -fN \
+ssh -J usercontainer \
+    -o StrictHostKeyChecking=no \
+    -o UserKnownHostsFile=/dev/null \
+    -o ServerAliveInterval=60 \
+    -o ServerAliveCountMax=5 \
+    -o ConnectTimeout=10 \
+    -o ExitOnForwardFailure=yes \
+    -o TCPKeepAlive=yes \
+    -o ConnectionAttempts=5 \
+    -fN \
     -L 0.0.0.0:${gt_license_port}:localhost:${gt_license_port} \
     -L 0.0.0.0:${gt_license_vendor_port}:localhost:${gt_license_vendor_port} \
     ${gt_license_user}@${gt_license_ip} </dev/null &>/dev/null &
