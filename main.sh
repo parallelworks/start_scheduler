@@ -60,6 +60,14 @@ echo "Start Scheduler Submitted"
 
 
 while true; do
+    # Check if either of the ports are open and listening
+    # Check if both ports are open and listening
+    if ! ssh -o StrictHostKeyChecking=no ${resource_publicIp} "netstat -tuln | grep -q ${gt_license_port} && netstat -tuln | grep -q ${gt_license_vendor_port}"; then
+        # Print a message if one or both ports are not listening
+        echo "SSH tunnel is not fully established on remote host. One or both of the ports ${gt_license_port} or ${gt_license_vendor_port} are not listening."
+        ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/license_tunnel.sh
+    fi
+    
     # Check if the screen session exists on the remote host
     if ssh "${resource_publicIp}" screen -list | grep gt-scheduler > /dev/null 2>&1; then
         echo "$(date) gt-scheduler session is running on ${resource_publicIp}" >> screen-session.log 2>&1
