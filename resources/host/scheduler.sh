@@ -131,8 +131,6 @@ while true; do
     if [ "$CORE_DEMAND" -eq 0 ]; then
         # Cancel all jobs for the current user
         scancel -u $USER
-        echo "All jobs have been canceled because CORE_DEMAND is zero."
-
     elif [ "${CORE_DEMAND}" -gt "${adv_pw_max_core_demand}" ]; then
         export CORE_DEMAND=${MAX_CORE_DEMAND}
         echod "CORE DEMAND exceeded the limit. Set to MAX CORE DEMAND: ${CORE_DEMAND}"

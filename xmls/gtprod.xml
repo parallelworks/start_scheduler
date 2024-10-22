@@ -3,31 +3,38 @@
   <cancel interpreter='bash'>cancel.sh</cancel>
   <inputs>
       <param 
+        name='gt_license_user' 
+        label='License server IP' 
+        type='hidden' 
+        value='ec2-user' 
+        help='User name of the license server' 
+      ></param>
+      <param 
         name='gt_license_ip' 
         label='License server IP' 
         type='hidden' 
-        value='34.70.106.187' 
+        value='3.14.18.97' 
         help='External IP address of the license server' 
       ></param>
       <param 
         name='gt_license_hostname' 
         label='License server hostname' 
         type='hidden' 
-        value='gt-license-server' 
+        value='gtlicenseserver-development' 
         help='Hostname of the license server' 
       ></param>
       <param 
         name='gt_license_port' 
         label='License server port' 
         type='hidden' 
-        value='27005' 
+        value='27032' 
         help='License port' 
       ></param>
       <param 
         name='gt_license_vendor_port' 
         label='License server vendor port' 
         type='hidden' 
-        value='27777' 
+        value='27812' 
         help='License vendor port' 
       ></param>
       <param 
@@ -37,13 +44,6 @@
         value='6601a2bac2750c88894592aa' 
         help='https://cloud.parallel.works/api/v2/organization' 
       ></param>
-      <param 
-        name='customer_name' 
-        label='Name of the customer' 
-        type='hidden' 
-        value='gtprod' 
-        help='All customers of the PW managed solution share the same user so we need a customer_name to identify them' 
-      ></param>
     <section name='pwrl_host' type='section' title='Service host' expanded='true'>
       <param 
         name='resource' 
@@ -52,6 +52,12 @@
         hideUserWorkspace='true' 
         help='Resource to host the service'>
       </param>
+      <param 
+        name='nports' 
+        label='Number of Ports to Reserve' 
+        type='hidden' 
+        value='1'  
+      ></param> 
     </section>
     <section name='gt' type='section' title='GT Inputs' expanded='true'>
       <param 
@@ -60,8 +66,9 @@
         label='GT version' 
         help='Select GT software version' 
         multiple='false'
-        value='v2023'
-        options = "[{'label': 'v2023', 'value': 'v2023'}, 
+        value='v2024'
+        options = "[{'label': 'v2024', 'value': 'v2024'},
+        {'label': 'v2023', 'value': 'v2023'}, 
         {'label': 'v2022', 'value': 'v2022'}, 
         {'label': 'v2021', 'value': 'v2021'}, 
         {'label': 'v2020', 'value': 'v2020'}]">  
@@ -74,6 +81,7 @@
         truevalue='Yes' 
         falsevalue='No' 
         checked='true' 
+        value='true'
         label='Activate job summary service'
       ></param>
       <param 
@@ -82,6 +90,7 @@
         truevalue='Yes' 
         falsevalue='No' 
         checked='true' 
+        value='true'
         label='Allow parallel solver'
       ></param>
     </section>
@@ -92,6 +101,24 @@
         type='text' 
         value='60' 
         help='Specify the cycle duration for sensing the core demand' 
+      ></param>
+      <param 
+        name='max_core_demand' 
+        label='Max Executor Cores' 
+        type='integer' 
+        min="50" 
+        max="1000" 
+        help='If using a high number of cores, ensure the scheduler instance type is sufficiently large.' 
+        value='500'
+      ></param>
+      <param 
+        name='max_cf_time' 
+        label='Max CF time [s]' 
+        type='integer' 
+        min="400" 
+        max="900" 
+        help='Maximum time in seconds a job can stay in the configuring state. Once this limit is reached, the job will be resubmitted, and partitions will be rotated.' 
+        value='500'
       ></param>
     </section>
   </inputs>
