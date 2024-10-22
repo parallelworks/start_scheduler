@@ -53,6 +53,74 @@ list_sorted_partitions() {
         echo "${partition} ${pcores}" >>  partitions_with_cores.list
     done < partitions.list
     sort -k2 -r -n partitions_with_cores.list | awk '{print $1}' > partitions.list
+    # This file is required by rotate_by_cores function
+    sort -k2 -r -n partitions_with_cores.list > sorted_with_cores.list
+}
+
+rotate_by_cores() {
+    # Read the file contents into an array, preserving lines
+    mapfile -t lines < sorted_with_cores.list
+
+    # Initialize an associative array to hold groups of lines by core count
+    declare -A groups
+
+    # Organize lines by core count
+    for line in "${lines[@]}"; do
+        core_count=$(echo "$line" | awk '{print $2}')
+        groups[$core_count]+="$line;"
+    done
+
+    # Create an array to hold the core counts for sorting
+    core_counts=("${!groups[@]}")
+    
+    # Sort core counts in descending order
+    IFS=$'\n' sorted_core_counts=($(sort -nr <<<"${core_counts[*]}"))
+    unset IFS
+
+    # Rotate each group and print the result
+    > sorted_with_cores.list # Truncate the file to start fresh
+    for core_count in "${sorted_core_counts[@]}"; do
+        # Split the group's lines into an array
+        IFS=';' read -ra group_lines <<< "${groups[$core_count]}"
+        group_size=${#group_lines[@]}
+
+        # Rotate the group by shifting elements
+        first_line="${group_lines[0]}"
+        for ((i = 0; i < group_size - 1; i++)); do
+            group_lines[i]="${group_lines[i+1]}"
+        done
+        group_lines[group_size-1]="$first_line"
+
+        # Append the rotated lines back to the file
+        for line in "${group_lines[@]}"; do
+            if [ -n "$line" ]; then
+                echo "$line" >> sorted_with_cores.list
+            fi
+        done
+    done
+    cat sorted_with_cores.list | awk '{print $1}' > partitions.list
+}
+
+
+cancel_long_cf_jobs() {
+    # Get the current time in seconds since epoch
+    current_time=$(date +%s)
+
+    # Loop over all jobs in CF state
+    squeue --state=CF --format="%.18i %.10M %.16u" | tail -n +2 | while read job_id time_in_cf user; do
+        # Convert time_in_cf (e.g. 00:10:00) to seconds
+        minutes=$(echo $time_in_cf | cut -d':' -f1)
+        seconds=$(echo $time_in_cf | cut -d':' -f2)
+        total_seconds_in_cf=$((10#$minutes*60 + 10#$seconds))
+        echo ${minutes} ${seconds} ${total_seconds_in_cf}
+
+        # If job has been in CF state for more than adv_pw_max_cf_time seconds, cancel it
+        if [ "$total_seconds_in_cf" -gt ${adv_pw_max_cf_time} ]; then
+            echo "Cancelling job $job_id (User: $user) in CF state for $total_seconds_in_cf seconds"
+            scancel $job_id
+            touch rotate_partitions
+        fi
+    done
 }
 
 get_core_supply() {
@@ -99,7 +167,7 @@ satisfy_core_overdemand() {
         return
     fi
 
-    # Minimize number of nodes by submitting jobs from large to small
+    # Minimize number of nodes by submitting jobs from large nodes to small nodes
     while IFS= read -r partition; do
         # Number of cores in the partition
         local pcores=$(sinfo  --noheader -p ${partition} -o "%.8c" | tr -d ' ')

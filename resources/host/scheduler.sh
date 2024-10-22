@@ -94,6 +94,14 @@ else
     get_core_demand_script="get_core_demand.py"
 fi
 
+check_partition_names
+list_sorted_partitions
+
+echo
+echod Partitions
+echo
+cat partitions.list
+
 while true; do
     sleep ${adv_pw_ds_cycle}
     echo; echo
@@ -101,9 +109,6 @@ while true; do
     # This facilitate debugging and quick fixes
     source inputs.sh
     source ${APP_DIR}/scheduler-libs.sh
-
-    # Check every time in case new partitions are added
-    check_partition_names
     
     # Writes balance to balance.json file
     write_balance # Writes balance.json
@@ -122,8 +127,29 @@ while true; do
     export CORE_DEMAND=$(cat CORE_DEMAND)
     echod "CORE DEMAND: ${CORE_DEMAND}"
 
+    # Check if CORE_DEMAND is zero
+    if [ "$CORE_DEMAND" -eq 0 ]; then
+        # Cancel all jobs for the current user
+        scancel -u $USER
+        echo "All jobs have been canceled because CORE_DEMAND is zero."
+
+    elif [ "${CORE_DEMAND}" -gt "${adv_pw_max_core_demand}" ]; then
+        export CORE_DEMAND=${MAX_CORE_DEMAND}
+        echod "CORE DEMAND exceeded the limit. Set to MAX CORE DEMAND: ${CORE_DEMAND}"
+    fi
+
+    # Cancel CF jobs if timeout is exceeded
+    cancel_long_cf_jobs
+    # Rotate partitions list
+    if [ -f rotate_partitions ]; then
+        echod "Rotating partitions"
+        rotate_by_cores
+        echo
+        cat partitions.list
+        echo
+    fi
+
     # CORE SUPPLY
-    list_sorted_partitions
     get_core_supply
     echod "CORE SUPPLY: ${CORE_SUPPLY}"
 

@@ -102,6 +102,24 @@
         value='60' 
         help='Specify the cycle duration for sensing the core demand' 
       ></param>
+      <param 
+        name='max_core_demand' 
+        label='Max Executor Cores' 
+        type='integer' 
+        min="50" 
+        max="1000" 
+        help='If using a high number of cores, ensure the scheduler instance type is sufficiently large.' 
+        value='500'
+      ></param>
+      <param 
+        name='max_cf_time' 
+        label='Max CF time [s]' 
+        type='integer' 
+        min="400" 
+        max="900" 
+        help='Maximum time in seconds a job can stay in the configuring state. Once this limit is reached, the job will be resubmitted, and partitions will be rotated.' 
+        value='500'
+      ></param>
     </section>
   </inputs>
 </tool>
