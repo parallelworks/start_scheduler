@@ -144,6 +144,7 @@ while true; do
     if [ -f rotate_partitions ]; then
         echod "Rotating partitions"
         rotate_by_cores
+        rm rotate_partitions
         echo
         cat partitions.list
         echo
