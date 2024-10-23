@@ -112,7 +112,6 @@ cancel_long_cf_jobs() {
         minutes=$(echo $time_in_cf | cut -d':' -f1)
         seconds=$(echo $time_in_cf | cut -d':' -f2)
         total_seconds_in_cf=$((10#$minutes*60 + 10#$seconds))
-        echo ${minutes} ${seconds} ${total_seconds_in_cf}
 
         # If job has been in CF state for more than adv_pw_max_cf_time seconds, cancel it
         if [ "$total_seconds_in_cf" -gt ${adv_pw_max_cf_time} ]; then
