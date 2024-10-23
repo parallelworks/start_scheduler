@@ -132,7 +132,7 @@ while true; do
         # Cancel all jobs for the current user
         scancel -u $USER
     elif [ "${CORE_DEMAND}" -gt "${adv_pw_max_core_demand}" ]; then
-        export CORE_DEMAND=${MAX_CORE_DEMAND}
+        export CORE_DEMAND=${adv_pw_max_core_demand}
         echod "CORE DEMAND exceeded the limit. Set to MAX CORE DEMAND: ${CORE_DEMAND}"
     fi
 
