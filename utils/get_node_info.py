@@ -17,7 +17,6 @@ def encode_string_to_base64(text):
 PW_PLATFORM_HOST = os.environ.get('PW_PLATFORM_HOST')
 HEADERS = {"Authorization": "Basic {}".format(encode_string_to_base64(os.environ['PW_API_KEY']))}
 
-URL = f'https://{PW_PLATFORM_HOST}/api/compute/clusters/alvaro/gcprockyv3'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process resource_name and resource_namespace')
@@ -25,6 +24,8 @@ if __name__ == '__main__':
     parser.add_argument('--resource_namespace', type=str, help='Namespace of the resource')
     args = parser.parse_args()
 
-res = requests.get(URL, headers = HEADERS)
+    URL = f'https://{PW_PLATFORM_HOST}/api/compute/clusters/{args.resource_namespace}/{args.resource_name}'
 
-print(json.dumps(res.json()['nodes'], indent = 4))
+    res = requests.get(URL, headers = HEADERS)
+
+    print(json.dumps(res.json()['nodes'], indent = 4))
