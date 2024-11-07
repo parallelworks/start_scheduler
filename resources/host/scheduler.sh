@@ -3,6 +3,12 @@ APP_DIR=$(dirname $0)
 source inputs.sh
 source ${APP_DIR}/scheduler-libs.sh
 
+if ! [ -d "/software" ]; then
+    echo; echo
+    echo "ERROR: Directory /software does not exist. Exiting."
+    exit 1
+fi
+
 export GTIHOME=/software/gtsuite
 GT_VERSION_HOME=${GTIHOME}/${gt_version}
 export PATH=${GTIHOME}/bin/:${PATH}
@@ -24,18 +30,6 @@ chmod u+w ${sched_work_dir} -R
 mkdir -p ${sched_work_dir}/gtdistd ${sched_work_dir}/db ${sched_work_dir}/compounds
 
 ulimit -u
-
-# Create license tunnels
-# FIXME: It assumes ~/.ssh/config is present and defines the usercontainer host!
-#        Won't work in onprem resources!
-ssh -J usercontainer ${resource_ssh_usercontainer_options} -fN \
-    -L 0.0.0.0:${gt_license_port}:localhost:${gt_license_port} \
-    -L 0.0.0.0:${gt_license_vendor_port}:localhost:${gt_license_vendor_port} \
-    ${gt_license_user}@${gt_license_ip} </dev/null &>/dev/null &
-
-
-netstat -tuln |  grep "${gt_license_port}\|${gt_license_vendor_port}"
-
 
 # Add lic server's hostname to loopback address
 cat /etc/hosts > hosts_mod
@@ -100,6 +94,14 @@ else
     get_core_demand_script="get_core_demand.py"
 fi
 
+check_partition_names
+list_sorted_partitions
+
+echo
+echod Partitions
+echo
+cat partitions.list
+
 while true; do
     sleep ${adv_pw_ds_cycle}
     echo; echo
@@ -107,9 +109,6 @@ while true; do
     # This facilitate debugging and quick fixes
     source inputs.sh
     source ${APP_DIR}/scheduler-libs.sh
-    
-    # Check every time in case new partitions are added
-    check_partition_names
     
     # Writes balance to balance.json file
     write_balance # Writes balance.json
@@ -128,8 +127,28 @@ while true; do
     export CORE_DEMAND=$(cat CORE_DEMAND)
     echod "CORE DEMAND: ${CORE_DEMAND}"
 
+    # Check if CORE_DEMAND is zero
+    if [ "$CORE_DEMAND" -eq 0 ]; then
+        # Cancel all jobs for the current user
+        scancel -u $USER
+    elif [ "${CORE_DEMAND}" -gt "${adv_pw_max_core_demand}" ]; then
+        export CORE_DEMAND=${adv_pw_max_core_demand}
+        echod "CORE DEMAND exceeded the limit. Set to MAX CORE DEMAND: ${CORE_DEMAND}"
+    fi
+
+    # Cancel CF jobs if timeout is exceeded
+    cancel_long_cf_jobs
+    # Rotate partitions list
+    if [ -f rotate_partitions ]; then
+        echod "Rotating partitions"
+        rotate_by_cores
+        rm rotate_partitions
+        echo
+        cat partitions.list
+        echo
+    fi
+
     # CORE SUPPLY
-    list_sorted_partitions
     get_core_supply
     echod "CORE SUPPLY: ${CORE_SUPPLY}"
 
