@@ -101,6 +101,56 @@ rotate_by_cores() {
     cat sorted_with_cores.list | awk '{print $1}' > partitions.list
 }
 
+rotate_single_by_core() {
+    # Read the file contents into an array, preserving lines
+    mapfile -t lines < sorted_with_cores.list
+
+    # Specify the target core count to rotate
+    target_core_count="$1"
+
+    # Initialize an associative array to hold groups of lines by core count
+    declare -A groups
+
+    # Organize lines by core count
+    for line in "${lines[@]}"; do
+        core_count=$(echo "$line" | awk '{print $2}')
+        groups[$core_count]+="$line;"
+    done
+
+    # Create an array to hold the core counts for sorting
+    core_counts=("${!groups[@]}")
+    
+    # Sort core counts in descending order
+    IFS=$'\n' sorted_core_counts=($(sort -nr <<<"${core_counts[*]}"))
+    unset IFS
+
+    # Rotate the specified group and keep other groups as is
+    > sorted_with_cores.list # Truncate the file to start fresh
+    for core_count in "${sorted_core_counts[@]}"; do
+        # Split the group's lines into an array
+        IFS=';' read -ra group_lines <<< "${groups[$core_count]}"
+        
+        if [ "$core_count" -eq "$target_core_count" ]; then
+            # Rotate the group for the specified core
+            group_size=${#group_lines[@]}
+            first_line="${group_lines[0]}"
+            for ((i = 0; i < group_size - 1; i++)); do
+                group_lines[i]="${group_lines[i+1]}"
+            done
+            group_lines[group_size-1]="$first_line"
+        fi
+
+        # Append the lines back to the file
+        for line in "${group_lines[@]}"; do
+            if [ -n "$line" ]; then
+                echo "$line" >> sorted_with_cores.list
+            fi
+        done
+    done
+    cat sorted_with_cores.list | awk '{print $1}' > partitions.list
+}
+
+
 
 cancel_long_cf_jobs() {
     # Get the current time in seconds since epoch
@@ -298,7 +348,6 @@ write_balance() {
         if [ $ssh_exit_code -eq 0 ]; then
             # Check if the balance.json file is valid
             if [ -s "balance.json" ]; then
-                echod "Balance retrieved successfully."
                 return 0  # Exit the function successfully
             else
                 echod "Error: File balance.json is missing or empty."
@@ -317,4 +366,43 @@ write_balance() {
     echod "ERROR: Could not obtain balance after $max_retries attempts."
     echod "Exiting workflow"
     exit 1
+}
+
+
+write_node_info() {
+    ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_node_info.py > node_info.json 2>/dev/null
+
+    ssh_exit_code=$?
+        
+    # Check if the SSH command succeeded
+    if [ $ssh_exit_code -eq 0 ]; then
+        # Check if the node_info.json file is valid
+        if [ -s "node_info.json" ]; then
+            return 0  # Exit the function successfully
+        fi
+    fi
+    
+    echod "ERROR: File node_info.json is missing or empty."
+    rm -rf node_info.json
+}
+
+cancel_failed_jobs_and_rotate_failed_partitions() {
+    # Loop over all jobs and get their compute node and partition
+    squeue --format="%.18i %.10R %.10P %.5C" | tail -n +2 | while read job_id compute_node partition cores; do
+        
+        # Check the node status in nodes.json
+        status=$(jq -r --arg hostname "$compute_node" '.[] | select(.hostname == $hostname) | .status' nodes.json)
+        
+        # If the status is "failed", cancel the job
+        if [ "$status" == "failed" ]; then
+            echod "Job ID: $job_id | Compute Node: $compute_node | Partition: $partition | Status: failed"
+            echod "Cancelling job"
+            scancel "$job_id"
+            echod "Rotating paritions with ${cores} cores"
+            rotate_single_by_core ${cores}
+            echo
+            cat partitions.list
+            echo
+        fi
+    done
 }

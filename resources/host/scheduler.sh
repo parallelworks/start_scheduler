@@ -136,17 +136,10 @@ while true; do
         echod "CORE DEMAND exceeded the limit. Set to MAX CORE DEMAND: ${CORE_DEMAND}"
     fi
 
-    # Cancel CF jobs if timeout is exceeded
-    cancel_long_cf_jobs
-    # Rotate partitions list
-    if [ -f rotate_partitions ]; then
-        echod "Rotating partitions"
-        rotate_by_cores
-        rm rotate_partitions
-        echo
-        cat partitions.list
-        echo
-    fi
+    # Write node status information
+    write_node_info
+
+    cancel_failed_jobs_and_rotate_failed_partitions
 
     # CORE SUPPLY
     get_core_supply

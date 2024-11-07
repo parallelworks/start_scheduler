@@ -1,0 +1,23 @@
+#!/pw/.miniconda3/bin/python
+import os
+import requests
+import json
+from base64 import b64encode
+
+def encode_string_to_base64(text):
+    # Convert the string to bytes
+    text_bytes = text.encode('utf-8')
+    # Encode the bytes to base64
+    encoded_bytes = b64encode(text_bytes)
+    # Convert the encoded bytes back to a string
+    encoded_string = encoded_bytes.decode('utf-8')
+    return encoded_string
+
+PW_PLATFORM_HOST = os.environ.get('PW_PLATFORM_HOST')
+HEADERS = {"Authorization": "Basic {}".format(encode_string_to_base64(os.environ['PW_API_KEY']))}
+
+URL = f'https://{PW_PLATFORM_HOST}/api/compute/clusters/alvaro/gcprockyv3'
+
+res = requests.get(URL, headers = HEADERS)
+
+print(json.dumps(res.json()['nodes'], indent = 4))
