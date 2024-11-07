@@ -390,8 +390,8 @@ cancel_failed_jobs_and_rotate_failed_partitions() {
     # Loop over all jobs and get their compute node and partition
     squeue --format="%.18i %.10R %.10P %.5C" | tail -n +2 | while read job_id compute_node partition cores; do
         
-        # Check the node status in nodes.json
-        status=$(jq -r --arg hostname "$compute_node" '.[] | select(.hostname == $hostname) | .status' nodes.json)
+        # Check the node status in node_info.json
+        status=$(jq -r --arg hostname "$compute_node" '.[] | select(.hostname == $hostname) | .status' node_info.json)
         
         # If the status is "failed", cancel the job
         if [ "$status" == "failed" ]; then
