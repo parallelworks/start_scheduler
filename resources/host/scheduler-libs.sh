@@ -370,7 +370,7 @@ write_balance() {
 
 
 write_node_info() {
-    ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_node_info.py > node_info.json 2>/dev/null
+    ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_node_info.py --resource_name=${resource_name} --resource_namespace=${resource_namespace} > node_info.json 2>/dev/null
 
     ssh_exit_code=$?
         

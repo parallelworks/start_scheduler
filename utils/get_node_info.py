@@ -1,6 +1,7 @@
 #!/pw/.miniconda3/bin/python
 import os
 import requests
+import argparse
 import json
 from base64 import b64encode
 
@@ -17,6 +18,12 @@ PW_PLATFORM_HOST = os.environ.get('PW_PLATFORM_HOST')
 HEADERS = {"Authorization": "Basic {}".format(encode_string_to_base64(os.environ['PW_API_KEY']))}
 
 URL = f'https://{PW_PLATFORM_HOST}/api/compute/clusters/alvaro/gcprockyv3'
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Process resource_name and resource_namespace')
+    parser.add_argument('--resource_name', type=str, help='Name of the resource')
+    parser.add_argument('--resource_namespace', type=str, help='Namespace of the resource')
+    args = parser.parse_args()
 
 res = requests.get(URL, headers = HEADERS)
 
