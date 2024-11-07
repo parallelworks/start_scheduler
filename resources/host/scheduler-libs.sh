@@ -280,20 +280,41 @@ configure_daemon_systemd() {
 write_balance() {
     # Customer's name matches the cluster's name because the license server only 
     # sees <gt-user-name>@<pw-user-name>-<cluster-name>-<session-number>-mgmt and
-    # we need to support sharing a single PW user account for the "Managed by PW" sol
+    # we need to support sharing a single PW user account for the "Managed by PW" solution
     customer_name=$(hostname | cut -d'-' -f2)
-    ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_balance.py --customer_name=${customer_name} --customer_org_id=${customer_org_id} > balance.json  2>/dev/null
     
-    ssh_exit_code=$?
-    if [ $ssh_exit_code -ne 0 ]; then
-        echod "ERROR: Could not obtain balance with command:"
-        echod "ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_balance.py --customer_name=${customer_name} --customer_org_id=${customer_org_id}"
-        echod "Exiting workflow"
-        exit 1
-    fi
+    # Set retry parameters
+    max_retries=10    # Maximum number of attempts
+    retry_delay=20   # Delay in seconds between attempts
+    attempt=1        # Start with the first attempt
 
-    if [ ! -s "balance.json" ]; then
-        echod "Error: File balance.json is missing or empty."
-        exit 1
-    fi
+    while [ $attempt -le $max_retries ]; do
+        # Attempt to retrieve the balance
+        ssh ${resource_ssh_usercontainer_options} usercontainer ${pw_job_dir}/utils/get_balance.py --customer_name=${customer_name} --customer_org_id=${customer_org_id} > balance.json 2>/dev/null
+        
+        ssh_exit_code=$?
+        
+        # Check if the SSH command succeeded
+        if [ $ssh_exit_code -eq 0 ]; then
+            # Check if the balance.json file is valid
+            if [ -s "balance.json" ]; then
+                echod "Balance retrieved successfully."
+                return 0  # Exit the function successfully
+            else
+                echod "Error: File balance.json is missing or empty."
+                # No need to retry if file is empty or missing, so exit
+                exit 1
+            fi
+        else
+            echod "ERROR: Could not obtain balance. Attempt $attempt of $max_retries failed."
+            echod "Retrying in $retry_delay seconds..."
+            attempt=$((attempt + 1))
+            sleep $retry_delay
+        fi
+    done
+
+    # If we exhausted all retries, log the error and exit
+    echod "ERROR: Could not obtain balance after $max_retries attempts."
+    echod "Exiting workflow"
+    exit 1
 }
