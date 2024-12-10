@@ -15,7 +15,7 @@ fi
 sshcmd="ssh ${resource_ssh_usercontainer_options} ${port_flag} $host"
 
 
-${sshcmd} 'cat >>"'${pw_job_dir}/logs.out'"' >> logstream.out 2>&1
+${sshcmd} 'cat >>"'${pw_job_dir}/logs/main/step_0/logs.out'"' >> logstream.out 2>&1
 
 while true; do
     if [ -f "$pushfile" ]; then
