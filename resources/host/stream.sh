@@ -20,12 +20,12 @@ ${sshcmd} 'cat >>"'${pw_job_dir}/logs/main/step_0/logs.out'"' >> logstream.out 2
 while true; do
     if [ -f "$pushfile" ]; then
         echo "Running" >> logstream.out 2>&1
-        tail -c +1 -f "$pushfile" | ${sshcmd} 'cat >>"'${pw_job_dir}/logs.out'"' >> logstream.out 2>&1
+        tail -c +1 -f "$pushfile" | ${sshcmd} 'cat >>"'${pw_job_dir}/logs/main/step_0/logs.out'"' >> logstream.out 2>&1
         echo CLOSING PID: $? >> logstream.out 2>&1
         exit 0
     else
         echo "Preparing" >> logstream.out 2>&1
-        echo "preparing inputs" | ${sshcmd} 'cat >>"'${pw_job_dir}/logs.out'"' >> logstream.out 2>&1
+        echo "preparing inputs" | ${sshcmd} 'cat >>"'${pw_job_dir}/logs/main/step_0/logs.out'"' >> logstream.out 2>&1
         sleep $delay
     fi
 done
