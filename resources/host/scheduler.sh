@@ -84,6 +84,8 @@ if ! configure_daemon_systemd ${sched_prop_file}; then
     exit 1
 fi
 
+echo "sudo systemctl stop gtdistd.service" >> cancel.sh
+
 # Connect webapp
 #ssh ${resource_ssh_usercontainer_options} -fN -R 0.0.0.0:${resource_ports}:localhost:8979 usercontainer
 #ssh ${resource_ssh_usercontainer_options} usercontainer "${pw_job_dir}/utils/notify.sh Running"
