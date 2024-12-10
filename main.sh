@@ -10,6 +10,7 @@ else
     git clone -b "$workflow_utils_branch" https://github.com/parallelworks/workflow-utils.git
 fi
 
+rm workflow-utils/stream.sh
 mv workflow-utils/* utils/
 rm -rf workflow-utils
 
