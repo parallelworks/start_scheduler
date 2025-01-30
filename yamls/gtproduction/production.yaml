@@ -16,7 +16,7 @@ jobs:
       gt_license_ip:
         label: License server IP
         type: string
-        default: 3.14.18.97
+        default: 3.234.19.114
         tooltip: External IP address of the license server
         hidden: true
       gt_license_hostname:
@@ -28,13 +28,13 @@ jobs:
       gt_license_port:
         label: License server port
         type: number
-        default: 27032
+        default: 27040
         tooltip: License port
         hidden: true
       gt_license_vendor_port:
         label: License server vendor port
         type: number
-        default: 27812
+        default: 27820
         tooltip: License vendor port
         hidden: true
       customer_org_id:
