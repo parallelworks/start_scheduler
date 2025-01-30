@@ -20,6 +20,15 @@ export sched_work_dir=/var/opt/gtsuite/
 export exec_work_dir=/var/opt/gtsuite/
 
 
+# Write load file for gtise interactive session
+load_env_sh=${sched_work_dir}/load-env.sh 
+rm -f ${load_env_sh}
+cat >> ${load_env_sh} <<HERE
+export GTIHOME=${GTIHOME}
+export GTISOFT_LICENSE_FILE=${gt_license_port}@localhost #10.128.0.78 27014
+export PATH=${GTIHOME}/bin/:${PATH}
+HERE
+
 sudo mkdir -p ${sched_work_dir} ${GTIHOME}
 
 # Make sure user has permissions
