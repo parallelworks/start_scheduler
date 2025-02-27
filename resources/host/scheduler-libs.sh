@@ -389,19 +389,22 @@ write_node_info() {
 }
 
 cancel_failed_jobs_and_rotate_failed_partitions() {
+    rm -f rotating_partitions
+    touch rotating_partitions  # Ensure the file exists
     # Loop over all jobs and get their compute node and partition
     squeue --format="%.18i %.10R %.10P %.5C" | tail -n +2 | while read job_id compute_node partition cores; do
         
         # Check the node status in node_info.json
         status=$(jq -r --arg hostname "$compute_node" '.[] | select(.hostname == $hostname) | .status' node_info.json)
         
-        # If the status is "failed", cancel the job
-        if [ "$status" == "failed" ]; then
+        # If the status is "failed" and the partition has not already been rotated, cancel the job
+        if [[ "$status" == "failed" ]] && ! grep -Fxq "$partition" "rotating_partitions"; then
             echod "Job ID: $job_id | Compute Node: $compute_node | Partition: $partition | Status: failed"
             echod "Cancelling job"
             scancel "$job_id"
-            echod "Rotating paritions with ${cores} cores"
+            echod "Rotating partitions with ${cores} cores"
             rotate_single_by_core ${cores}
+            echo "$partition" >> rotating_partitions
             echo
             cat partitions.list
             echo
