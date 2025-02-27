@@ -59,7 +59,9 @@ echo "Start Scheduler Submitted"
 # Preparing service.json to connect to webapp
 #sed -i "s|.*PORT.*|    \"PORT\": \"${resource_ports}\",|" service.json
 
-
+# Initialize retry counter
+retry_count=0
+max_retries=5
 while true; do
     # Check if either of the ports are open and listening
     # Check if both ports are open and listening
@@ -72,11 +74,19 @@ while true; do
     # Check if the screen session exists on the remote host
     if ssh "${resource_publicIp}" screen -list | grep gt-scheduler > /dev/null 2>&1; then
         echo "$(date) gt-scheduler session is running on ${resource_publicIp}" >> screen-session.log 2>&1
+        retry_count=0
     else
-        echo "$(date) gt-scheduler session is not running on ${resource_publicIp}" >> screen-session.log 2>&1
+        echo "$(date) gt-scheduler session is not running on ${resource_publicIp}" 2>&1 | tee -a screen-session.log
+        retry_count=$((retry_count + 1))
+    fi
+
+    # Exit after 5 retries
+    if [ "$retry_count" -ge "$max_retries" ]; then
+        echo "$(date) Maximum retries reached, exiting." 2>&1 | tee -a screen-session.log
         break
     fi
-    sleep 60
+
+    sleep 90
 done
 
 
