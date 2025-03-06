@@ -173,6 +173,8 @@ def remove_jobs_with_no_balance(active_jobs, balance):
         'gtautoliononed': 'gtautoliononed',
         'gtautolion': 'gtautoliononed',
         'gtpowerxrt': 'gtpowerxrt',
+        'gtautomation': 'gtautomation',
+        'gtprocessmap': 'gtautomation',
         'optimizer': ''
     }
 
