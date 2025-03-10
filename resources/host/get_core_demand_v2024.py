@@ -176,7 +176,19 @@ def remove_jobs_with_no_balance(active_jobs, balance):
         'gtpowerxrt': 'gtpowerxrt',
         'gtautomation': 'gtautomation',
         'gtprocessmap': 'gtautomation',
-        'optimizer': ''
+        'optimizer': '',
+        'cosimthermal': 'cosimthermal',
+        'gtadvancedcombustion': 'gtadvancedcombustion',
+        'gtautolionthreed': 'gtautolionthreed',
+        'gtlinear': 'gtlinear',
+        'gtjmagmachine': 'gtjmagmachine',
+        'gtthreedmbd': 'gtthreedmbd',
+        'gtthreedmbdadvancedtribology': 'gtthreedmbdadvancedtribology',
+        'gtthreedmbdmachinery': 'gtthreedmbdmachinery',
+        'gtthreedmbdvehicledynamics': 'gtthreedmbdvehicledynamics',
+        'gtxchem': 'gtxchem',
+        'gtfemag': 'gtfemag',
+        'gtautothreedflow': 'gtautothreedflow'
     }
 
     active_jobs_with_balance = deepcopy(active_jobs)
