@@ -138,6 +138,12 @@ while true; do
     export CORE_DEMAND=$(cat CORE_DEMAND)
     echod "CORE DEMAND: ${CORE_DEMAND}"
 
+    # Check if CORE_DEMAND is empty
+    if [[ -z "$CORE_DEMAND" ]]; then
+        echod "Error: CORE_DEMAND is empty. Setting it to 0."
+        export CORE_DEMAND=0
+    fi
+
     # Check if CORE_DEMAND is zero
     if [ "$CORE_DEMAND" -eq 0 ]; then
         # Cancel all jobs for the current user
