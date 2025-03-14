@@ -204,10 +204,10 @@ def remove_jobs_with_no_balance(active_jobs, balance):
             # In some cases the job license is unkown at this point
             continue
         elif job_license not in balance:
-            print(f'Warning: Removing job with license {job_license} not present in balance', job, balance, file=sys.stderr, flush = True)
+            print(f'Warning: Removing job with license {job_license} not present in balance\n', job, balance, file=sys.stderr, flush = True)
             del active_jobs_with_balance[job]
         elif balance[job_license] <= 0:
-            print(f'Warning: Removing job with license {job_license} ane negative balance', job, balance, file=sys.stderr, flush = True)
+            print(f'Warning: Removing job with license {job_license} and no balance\n', job, balance, file=sys.stderr, flush = True)
             del active_jobs_with_balance[job]
 
     return active_jobs_with_balance
