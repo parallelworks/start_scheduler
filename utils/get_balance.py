@@ -66,6 +66,6 @@ if __name__ == '__main__':
     res = requests.get(GT_ORGANIZATION_URL, headers = HEADERS)
     existing_groups = [group['name'] for group in res.json()]
 
-    check_group_existence(group_names, existing_groups)
+    #check_group_existence(group_names, existing_groups)
 
     get_balance(group_names, res)
