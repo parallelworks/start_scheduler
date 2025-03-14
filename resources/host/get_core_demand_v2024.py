@@ -180,6 +180,7 @@ def remove_jobs_with_no_balance(active_jobs, balance):
         'cosimthermal': 'cosimthermal',
         'gtadvancedcombustion': 'gtadvancedcombustion',
         'gtautolionthreed': 'gtautolionthreed',
+        'gtautolion3d':  'gtautolionthreed',
         'gtlinear': 'gtlinear',
         'gtjmagmachine': 'gtjmagmachine',
         'gtthreedmbd': 'gtthreedmbd',
