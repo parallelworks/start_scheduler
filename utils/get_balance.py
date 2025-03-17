@@ -41,7 +41,7 @@ def get_balance(group_names, res):
             else:
                 allocation_used = 0
             
-            if 'used' in group['total']:
+            if 'total' in group['allocations']:
                 allocation_total = group['allocations']['total']['value']
             else:
                 allocation_total = 0
