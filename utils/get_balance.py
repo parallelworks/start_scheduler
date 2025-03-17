@@ -40,7 +40,11 @@ def get_balance(group_names, res):
                 allocation_used = group['allocations']['used']['value']
             else:
                 allocation_used = 0
-            allocation_total = group['allocations']['total']['value']
+            
+            if 'used' in group['total']:
+                allocation_total = group['allocations']['total']['value']
+            else:
+                allocation_total = 0
             balance[product_name] = allocation_total-allocation_used 
     
     print(json.dumps(balance), flush = True)
