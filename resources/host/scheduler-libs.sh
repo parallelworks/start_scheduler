@@ -358,6 +358,7 @@ write_balance() {
             fi
         else
             echod "ERROR: Could not obtain balance. Attempt $attempt of $max_retries failed."
+            cat write_balance.log
             echod "Retrying in $retry_delay seconds..."
             attempt=$((attempt + 1))
             sleep $retry_delay
