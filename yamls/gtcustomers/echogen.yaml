@@ -34,7 +34,7 @@ jobs:
       customer_org_id:
         label: ID of the orgazation of the customer
         type: string
-        default: 6601a2bac2750c88894592aa
+        default: 6751b2d699b4ed9747423059
         tooltip: https://cloud.parallel.works/api/v2/organization
         hidden: true
       pwrl_host:
