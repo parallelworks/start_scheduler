@@ -1,0 +1,104 @@
+jobs:
+  main:
+    steps:
+      - name: Start and Monitor GT Scheduler
+        run: bash main.sh
+        cleanup: bash cancel.sh
+'on':
+  execute:
+    inputs:
+      gt_license_user:
+        label: License server user
+        type: string
+        default: ec2-user
+        tooltip: User name of the license server
+        hidden: true
+      gt_license_ip:
+        label: License server IP
+        type: string
+        default: 34.202.151.160
+        tooltip: External IP address of the license server
+        hidden: true
+      gt_license_port:
+        label: License server port
+        type: number
+        default: 27046
+        tooltip: License port
+        hidden: true
+      gt_license_vendor_port:
+        label: License server vendor port
+        type: number
+        default: 27826
+        tooltip: License vendor port
+        hidden: true
+      customer_org_id:
+        label: ID of the orgazation of the customer
+        type: string
+        default: 6751b2d699b4ed9747423059
+        tooltip: https://cloud.parallel.works/api/v2/organization
+        hidden: true
+      pwrl_host:
+        type: group
+        label: Service Host
+        items:
+          resource:
+            label: Service host
+            type: compute-clusters
+            tooltip: Select the resource to start GT's scheduler
+            include-workspace: false
+          nports:
+            label: Number of Ports to Reserve
+            type: number
+            default: 1
+            hidden: true
+      gt:
+        type: group
+        label: GT Inputs
+        items:
+          version:
+            label: Select Jupyter Lab Installation
+            type: dropdown
+            default: v2024
+            options:
+              - value: v2024
+                label: v2024
+              - value: v2023
+                label: v2023
+              - value: v2022
+                label: v2022
+              - value: v2021
+                label: v2021
+              - value: v2020
+                label: v2020
+      adv_gt:
+        type: group
+        label: Advanced GT Inputs
+        collapsed: true
+        items:
+          sum_serv:
+            label: Activate job summary service
+            type: boolean
+            default: true
+          allow_ps:
+            label: Allow parallel solver
+            type: boolean
+            default: false
+      adv_pw:
+        type: group
+        label: Advanced PW Inputs
+        collapsed: true
+        items:
+          ds_cycle:
+            label: Core demand sensing cycle duration [s]
+            type: number
+            min: 15
+            max: 600
+            default: 60
+            tooltip: Specify the cycle duration for sensing the core demand
+          max_core_demand:
+            label: Max Executor Cores
+            type: number
+            min: 50
+            max: 1000
+            default: 500
+            tooltip: Specify the cycle duration for sensing the core demand
