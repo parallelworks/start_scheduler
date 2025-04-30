@@ -56,10 +56,12 @@ jobs:
         label: GT Inputs
         items:
           version:
-            label: Select Jupyter Lab Installation
+            label: Select GT Version
             type: dropdown
-            default: v2024
+            default: v2025
             options:
+              - value: v2025
+                label: v2025
               - value: v2024
                 label: v2024
               - value: v2023
