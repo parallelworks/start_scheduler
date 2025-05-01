@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 source inputs.sh
 ssh-keygen -R ${pwrl_host_resource_publicIp}
 
