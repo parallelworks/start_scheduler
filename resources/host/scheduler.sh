@@ -3,6 +3,10 @@ APP_DIR=$(dirname $0)
 source inputs.sh
 source ${APP_DIR}/scheduler-libs.sh
 
+# REMOVE
+echo sleeping 10 mins
+sleep 600
+
 if ! [ -d "/software" ]; then
     echo; echo
     echo "ERROR: Directory /software does not exist. Exiting."
