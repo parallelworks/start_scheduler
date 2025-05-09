@@ -9,14 +9,14 @@ echo '#!/bin/bash' > cancel.sh
 # Cancel all jobs in the SLURM queue
 echo "scancel -u ${USER}" >> cancel.sh
 # Kill the screen session
-echo sleeping
-sleep 1000
 echo 'screen -X -S gt-scheduler quit' >> cancel.sh
 chmod +x cancel.sh
 
 # Start a detached screen session and run test.sh inside it
 screen -dmS gt-scheduler bash -c "./scheduler.sh &> logs.out"
 
+echo sleeping screen
+sleep 1000
 # Activate streaming
 bash stream.sh &> stream.out &
 stream_pid=$!
