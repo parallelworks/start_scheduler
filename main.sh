@@ -49,6 +49,8 @@ if [ ${return_code} -ne 0 ]; then
     exit 1
 fi
 
+echo sleeping
+sleep 1000
 # Launch scheduler
 echo; echo
 echo "ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh"
