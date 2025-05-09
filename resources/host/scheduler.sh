@@ -1,4 +1,5 @@
 #!/bin/bash
+# WORKS
 APP_DIR=$(dirname $0)
 source inputs.sh
 source ${APP_DIR}/scheduler-libs.sh
@@ -40,8 +41,7 @@ chmod u+w ${sched_work_dir} -R
 mkdir -p ${sched_work_dir}/gtdistd ${sched_work_dir}/db ${sched_work_dir}/compounds
 
 
-echo sleep ulimit
-sleep 10000
+# WORKS
 ulimit -u
 
 # Add lic server's hostname to loopback address
@@ -68,6 +68,10 @@ if [[ ! -f "${template_sched_prop_file}" ]]; then
     echod "ERROR: File ${template_sched_prop_file} does not exist. Exiting workflow." >&2
     exit 1
 fi
+
+echo sleep scheduler prop
+sleep 10000
+
 cp ${template_sched_prop_file} ${sched_prop_file}
 sed -i "s|^GTDistributed.work-dir.*|GTDistributed.work-dir = ${sched_work_dir}/gtdistd|g" ${sched_prop_file}
 if [[ ${adv_gt_sum_serv} == "True" ]]; then
