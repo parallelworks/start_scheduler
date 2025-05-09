@@ -148,10 +148,7 @@ while true; do
         --allow_ps ${adv_gt_allow_ps} \
         --sched_work_dir ${sched_work_dir} > CORE_DEMAND
 
-
-    hostname
-    echo sleep after python3 get core demand
-    sleep 10000
+    # WORKSS
 
     export CORE_DEMAND=$(cat CORE_DEMAND)
     echod "CORE DEMAND: ${CORE_DEMAND}"
@@ -175,6 +172,10 @@ while true; do
     write_node_info
 
     cancel_failed_jobs_and_rotate_failed_partitions
+
+    hostname
+    echo sleep after cancel_failed_jobs_and_rotate_failed_partitions
+    sleep 10000
 
     # CORE SUPPLY
     get_core_supply
