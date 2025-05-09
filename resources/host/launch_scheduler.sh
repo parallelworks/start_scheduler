@@ -9,6 +9,8 @@ echo '#!/bin/bash' > cancel.sh
 # Cancel all jobs in the SLURM queue
 echo "scancel -u ${USER}" >> cancel.sh
 # Kill the screen session
+
+sleep 600
 echo 'screen -X -S gt-scheduler quit' >> cancel.sh
 chmod +x cancel.sh
 
