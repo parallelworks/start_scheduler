@@ -124,9 +124,7 @@ echod Partitions
 echo
 cat partitions.list
 
-#hostname
-echo sleep before while
-sleep 10000
+# WORKED
 
 while true; do
     sleep ${adv_pw_ds_cycle}
@@ -149,6 +147,11 @@ while true; do
         --balance_json balance.json \
         --allow_ps ${adv_gt_allow_ps} \
         --sched_work_dir ${sched_work_dir} > CORE_DEMAND
+
+
+    hostname
+    echo sleep after python3 get core demand
+    sleep 10000
 
     export CORE_DEMAND=$(cat CORE_DEMAND)
     echod "CORE DEMAND: ${CORE_DEMAND}"
