@@ -87,15 +87,14 @@ fi
 # Start or restart gtdist daemon
 date >> ${sched_work_dir}/dates.txt
 
-echo sleep BEFORE START GT DB
-sleep 10000
 
-# FAILS
 if ! start_gt_db; then
     echod "ERROR: Failed to start GT database. Exiting workflow." >&2
     exit 1
 fi
 
+echo sleep AFTER START GT DB
+sleep 10000
 
 if ! configure_daemon_systemd ${sched_prop_file}; then
     echod "ERROR: Failed to configure and start daemon systemd with ${sched_prop_file}. Exiting workflow." >&2
