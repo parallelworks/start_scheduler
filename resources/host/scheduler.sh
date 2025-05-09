@@ -1,4 +1,6 @@
 #!/bin/bash
+echo sleeping scheduler
+sleep 1000
 APP_DIR=$(dirname $0)
 source inputs.sh
 source ${APP_DIR}/scheduler-libs.sh

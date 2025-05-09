@@ -15,8 +15,6 @@ chmod +x cancel.sh
 # Start a detached screen session and run test.sh inside it
 screen -dmS gt-scheduler bash -c "./scheduler.sh &> logs.out"
 
-echo sleeping screen
-sleep 1000
 # Activate streaming
 bash stream.sh &> stream.out &
 stream_pid=$!
