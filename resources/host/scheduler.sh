@@ -101,8 +101,9 @@ if ! configure_daemon_systemd ${sched_prop_file}; then
     exit 1
 fi
 
-echo sleep configure_daemon_systemd
-sleep 10000
+#hostname
+#echo sleep configure_daemon_systemd
+#sleep 10000
 
 echo "sudo systemctl stop gtdistd.service" >> cancel.sh
 
