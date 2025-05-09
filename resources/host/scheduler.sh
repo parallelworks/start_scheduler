@@ -193,7 +193,4 @@ while true; do
     # The tail is to skip the date
     squeue --long | tail -n +2
 
-    hostname
-    echo sleep end while
-    sleep 10000
 done
