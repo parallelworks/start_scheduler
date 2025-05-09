@@ -82,6 +82,9 @@ fi
 date >> ${sched_work_dir}/dates.txt
 
 
+echo sleeping start_gt_db
+sleep 1000
+
 if ! start_gt_db; then
     echod "ERROR: Failed to start GT database. Exiting workflow." >&2
     exit 1
