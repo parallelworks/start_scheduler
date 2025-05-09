@@ -93,7 +93,6 @@ if ! start_gt_db; then
     exit 1
 fi
 
-# WORKS
 
 if ! configure_daemon_systemd ${sched_prop_file}; then
     echod "ERROR: Failed to configure and start daemon systemd with ${sched_prop_file}. Exiting workflow." >&2
@@ -101,9 +100,7 @@ if ! configure_daemon_systemd ${sched_prop_file}; then
     exit 1
 fi
 
-#hostname
-#echo sleep configure_daemon_systemd
-#sleep 10000
+# WORKS
 
 echo "sudo systemctl stop gtdistd.service" >> cancel.sh
 
@@ -126,6 +123,10 @@ echo
 echod Partitions
 echo
 cat partitions.list
+
+#hostname
+echo sleep before while
+sleep 10000
 
 while true; do
     sleep ${adv_pw_ds_cycle}
