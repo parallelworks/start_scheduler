@@ -172,7 +172,7 @@ while true; do
     # Write node status information
     write_node_info
 
-    cancel_failed_jobs_and_rotate_failed_partitions
+    #cancel_failed_jobs_and_rotate_failed_partitions
 
     # WORKS
 
