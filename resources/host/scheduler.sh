@@ -126,6 +126,7 @@ cat partitions.list
 
 # WORKED
 
+set -x
 while true; do
     sleep ${adv_pw_ds_cycle}
     echo; echo
