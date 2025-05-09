@@ -69,8 +69,7 @@ if [[ ! -f "${template_sched_prop_file}" ]]; then
     exit 1
 fi
 
-echo sleep scheduler prop
-sleep 10000
+# WORKS
 
 cp ${template_sched_prop_file} ${sched_prop_file}
 sed -i "s|^GTDistributed.work-dir.*|GTDistributed.work-dir = ${sched_work_dir}/gtdistd|g" ${sched_prop_file}
@@ -87,6 +86,9 @@ fi
 
 # Start or restart gtdist daemon
 date >> ${sched_work_dir}/dates.txt
+
+echo sleep BEFORE START GT DB
+sleep 10000
 
 # FAILS
 if ! start_gt_db; then
