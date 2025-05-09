@@ -93,14 +93,16 @@ if ! start_gt_db; then
     exit 1
 fi
 
-echo sleep AFTER START GT DB
-sleep 10000
+# WORKS
 
 if ! configure_daemon_systemd ${sched_prop_file}; then
     echod "ERROR: Failed to configure and start daemon systemd with ${sched_prop_file}. Exiting workflow." >&2
     cat /tmp/gtdistd.out >&2
     exit 1
 fi
+
+echo sleep configure_daemon_systemd
+sleep 10000
 
 echo "sudo systemctl stop gtdistd.service" >> cancel.sh
 
