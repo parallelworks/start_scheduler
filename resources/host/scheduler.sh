@@ -173,9 +173,7 @@ while true; do
 
     cancel_failed_jobs_and_rotate_failed_partitions
 
-    hostname
-    echo sleep after cancel_failed_jobs_and_rotate_failed_partitions
-    sleep 10000
+    # WORKS
 
     # CORE SUPPLY
     get_core_supply
@@ -194,4 +192,8 @@ while true; do
     fi
     # The tail is to skip the date
     squeue --long | tail -n +2
+
+    hostname
+    echo sleep end while
+    sleep 10000
 done
