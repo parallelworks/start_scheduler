@@ -100,6 +100,8 @@ echo "sudo systemctl stop gtdistd.service" >> cancel.sh
 
 if [[ "${gt_version}" == "v2024" ]]; then
     get_core_demand_script="get_core_demand_v2024.py"
+elif [[ "${gt_version}" == "v2025" ]]; then
+    get_core_demand_script="get_core_demand_v2024.py"
 else
     get_core_demand_script="get_core_demand.py"
 fi
