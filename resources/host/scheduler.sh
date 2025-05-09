@@ -1,4 +1,6 @@
 #!/bin/bash
+echo sleep scheduler
+sleep 10000
 APP_DIR=$(dirname $0)
 source inputs.sh
 source ${APP_DIR}/scheduler-libs.sh
@@ -80,10 +82,6 @@ fi
 
 # Start or restart gtdist daemon
 date >> ${sched_work_dir}/dates.txt
-
-
-echo sleeping start_gt_db
-sleep 1000
 
 if ! start_gt_db; then
     echod "ERROR: Failed to start GT database. Exiting workflow." >&2
