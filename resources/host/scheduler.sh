@@ -170,9 +170,10 @@ while true; do
     fi
 
     # Write node status information
+    """
     write_node_info
 
-    #cancel_failed_jobs_and_rotate_failed_partitions
+    \cancel_failed_jobs_and_rotate_failed_partitions
 
     # WORKS
 
@@ -193,5 +194,5 @@ while true; do
     fi
     # The tail is to skip the date
     squeue --long | tail -n +2
-
+    """
 done
