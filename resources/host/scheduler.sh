@@ -3,6 +3,7 @@ APP_DIR=$(dirname $0)
 source inputs.sh
 source ${APP_DIR}/scheduler-libs.sh
 
+
 if ! [ -d "/software" ]; then
     echo; echo
     echo "ERROR: Directory /software does not exist. Exiting."
@@ -80,13 +81,11 @@ fi
 # Start or restart gtdist daemon
 date >> ${sched_work_dir}/dates.txt
 
-start_gt_db
 if ! start_gt_db; then
     echod "ERROR: Failed to start GT database. Exiting workflow." >&2
     exit 1
 fi
 
-configure_daemon_systemd ${sched_prop_file}
 if ! configure_daemon_systemd ${sched_prop_file}; then
     echod "ERROR: Failed to configure and start daemon systemd with ${sched_prop_file}. Exiting workflow." >&2
     cat /tmp/gtdistd.out >&2
@@ -100,6 +99,8 @@ echo "sudo systemctl stop gtdistd.service" >> cancel.sh
 #ssh ${resource_ssh_usercontainer_options} usercontainer "${pw_job_dir}/utils/notify.sh Running"
 
 if [[ "${gt_version}" == "v2024" ]]; then
+    get_core_demand_script="get_core_demand_v2024.py"
+elif [[ "${gt_version}" == "v2025" ]]; then
     get_core_demand_script="get_core_demand_v2024.py"
 else
     get_core_demand_script="get_core_demand.py"
