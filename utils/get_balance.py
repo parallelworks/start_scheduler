@@ -21,7 +21,7 @@ def encode_string_to_base64(text):
 PW_PLATFORM_HOST = os.environ.get('PW_PLATFORM_HOST')
 HEADERS = {"Authorization": "Basic {}".format(encode_string_to_base64(os.environ['PW_API_KEY']))}
 # FIXME: Get from license server
-GT_PRODUCTS = ['gtsuite', 'gtautoliononed', 'gtpowerxrt', 'gtxchem', 'gtfemag', 'gtautothreedflow', 'gtautomation', 'cosimthermal', 'gtadvancedcombustion', 'gtautolionthreed', 'gtjmagmachine', 'gtthreedmbd', 'gtthreedmbdadvancedtribology', 'gtthreedmbdmachinery', 'gtthreedmbdvehicledynamics']
+GT_PRODUCTS = ['gtlinear', 'gtpowerx', 'gtsuite', 'gtautoliononed', 'gtpowerxrt', 'gtxchem', 'gtfemag', 'gtautothreedflow', 'gtautomation', 'cosimthermal', 'gtadvancedcombustion', 'gtautolionthreed', 'gtjmagmachine', 'gtthreedmbd', 'gtthreedmbdadvancedtribology', 'gtthreedmbdmachinery', 'gtthreedmbdvehicledynamics']
 
 def check_group_existence(group_names, existing_groups):
     """Check if all group names exist in the retrieved groups."""
