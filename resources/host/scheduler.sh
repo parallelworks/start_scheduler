@@ -145,16 +145,18 @@ while true; do
         export CORE_DEMAND=0
     fi
 
+    if [ "${CORE_DEMAND}" -lt "${adv_pw_min_core_demand}" ]; then
+        export CORE_DEMAND=${adv_pw_min_core_demand}
+        echod "CORE DEMAND is under minimum limit. Set to MIN CORE DEMAND: ${CORE_DEMAND}"
+    elif [ "${CORE_DEMAND}" -gt "${adv_pw_max_core_demand}" ]; then
+        export CORE_DEMAND=${adv_pw_max_core_demand}
+        echod "CORE DEMAND exceeded the limit. Set to MAX CORE DEMAND: ${CORE_DEMAND}"
+    fi
+
     # Check if CORE_DEMAND is zero
     if [ "$CORE_DEMAND" -eq 0 ]; then
         # Cancel all jobs for the current user
         scancel -u $USER
-    elif [ "${CORE_DEMAND}" -gt "${adv_pw_max_core_demand}" ]; then
-        export CORE_DEMAND=${adv_pw_max_core_demand}
-        echod "CORE DEMAND exceeded the limit. Set to MAX CORE DEMAND: ${CORE_DEMAND}"
-    elif [ "${CORE_DEMAND}" -lt "${adv_pw_min_core_demand}" ]; then
-        export CORE_DEMAND=${adv_pw_min_core_demand}
-        echod "CORE DEMAND is under minimum limit. Set to MIN CORE DEMAND: ${CORE_DEMAND}"
     fi
     # Write node status information
     write_node_info
