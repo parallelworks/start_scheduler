@@ -95,10 +95,17 @@ jobs:
             max: 600
             default: 60
             tooltip: Specify the cycle duration for sensing the core demand
+          min_core_demand:
+            label: Min Executor Cores
+            type: number
+            min: 0
+            max: 100
+            default: 0
+            tooltip: Minimum number of cores to always keep running   
           max_core_demand:
             label: Max Executor Cores
             type: number
             min: 50
             max: 1000
             default: 500
-            tooltip: Specify the cycle duration for sensing the core demand
+            tooltip: Maximum number of cores the scheduler can start
