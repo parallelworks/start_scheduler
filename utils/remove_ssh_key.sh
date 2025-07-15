@@ -3,6 +3,11 @@
 # Example public key (replace this with your actual key)
 PUBLIC_KEY="__PUBLIC_KEY__"
 
+if [[ ${PUBLIC_KEY} == "__PUBLIC_KEY__" ]]; then
+  echo "ERROR: Undefined public key"
+  exit 1
+fi
+
 # File path
 AUTH_KEYS_FILE="$HOME/.ssh/authorized_keys"
 

@@ -10,7 +10,7 @@ jobs:
         run: |
           set -x
           PUBLIC_KEY=$(ssh -o StrictHostKeyChecking=no ${{ inputs.pwrl_host.resource.ip }} cat ~/.ssh/id_rsa.pub)
-          if [ -z "$MY_VAR" ]; then
+          if [ -z "${PUBLIC_KEY}" ]; then
             echo "ERROR: Unable to obtain public key"
             exit 1
           fi
