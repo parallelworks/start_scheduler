@@ -9,7 +9,7 @@ jobs:
       - name: SSH Auth
         run: |
           set -x
-          PUBLIC_KEY=$(ssh -o StrictHostKeyChecking=no ${{ inputs.pwrl_host.resource.ip }}) cat ~/.ssh/id_rsa.pub)
+          PUBLIC_KEY=$(ssh -o StrictHostKeyChecking=no ${{ inputs.pwrl_host.resource.ip }} cat ~/.ssh/id_rsa.pub)
           if [ -z "$MY_VAR" ]; then
             echo "ERROR: Unable to obtain public key"
             exit 1
