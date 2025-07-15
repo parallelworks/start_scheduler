@@ -39,10 +39,8 @@ cluster_rsync
 # Create license tunnel
 echo; echo
 # Need to forward agent to access license server from controller
-eval "$(ssh-agent -s)"
-ssh-add ~/.ssh/pw_id_rsa
-echo "ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/license_tunnel.sh"
-ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/license_tunnel.sh
+echo "ssh -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/license_tunnel.sh"
+ssh -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/license_tunnel.sh
 return_code=$?
 if [ ${return_code} -ne 0 ]; then
     bash cancel.sh
@@ -51,8 +49,8 @@ fi
 
 # Launch scheduler
 echo; echo
-echo "ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh"
-ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh
+echo "ssh -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh"
+ssh -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/launch_scheduler.sh
 
 echo "Start Scheduler Submitted"
 
@@ -68,7 +66,7 @@ while true; do
     if ! ssh -o StrictHostKeyChecking=no ${resource_publicIp} "netstat -tuln | grep -q ${gt_license_port} && netstat -tuln | grep -q ${gt_license_vendor_port}"; then
         # Print a message if one or both ports are not listening
         echo "SSH tunnel is not fully established on remote host. One or both of the ports ${gt_license_port} or ${gt_license_vendor_port} are not listening."
-        ssh -A -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/license_tunnel.sh
+        ssh -o StrictHostKeyChecking=no ${resource_publicIp} ${resource_jobdir}/${resource_label}/license_tunnel.sh
     fi
     
     # Check if the screen session exists on the remote host
