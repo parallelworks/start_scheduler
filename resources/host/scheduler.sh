@@ -3,6 +3,7 @@ APP_DIR=$(dirname $0)
 source inputs.sh
 source ${APP_DIR}/scheduler-libs.sh
 
+bash license_tunnel.sh
 
 if ! [ -d "/software" ]; then
     echo; echo
