@@ -53,6 +53,11 @@ jobs:
         default: 6751b2d699b4ed9747423059
         tooltip: https://cloud.parallel.works/api/v2/organization
         hidden: true
+      customer_org_name:
+        label: Name of the orgazation of the customer
+        type: string
+        default: hostedbygt
+        hidden: true
       pwrl_host:
         type: group
         label: Service Host

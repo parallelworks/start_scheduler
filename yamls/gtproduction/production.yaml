@@ -59,6 +59,11 @@ jobs:
         default: 6601a2bac2750c88894592aa
         tooltip: https://cloud.parallel.works/api/v2/organization
         hidden: true
+      customer_org_name:
+        label: Name of the orgazation of the customer
+        type: string
+        default: gammatechnologies
+        hidden: true
       pwrl_host:
         type: group
         label: Service Host

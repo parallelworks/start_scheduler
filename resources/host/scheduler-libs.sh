@@ -342,7 +342,7 @@ write_balance() {
 
     while [ $attempt -le $max_retries ]; do
         # Attempt to retrieve the balance
-        ssh ${resource_ssh_usercontainer_options} usercontainer ${uc_python_cmd} ${pw_job_dir}/utils/get_balance.py --customer_name=${customer_name} --customer_org_id=${customer_org_id} > balance.json 2>write_balance.log
+        ssh ${resource_ssh_usercontainer_options} usercontainer ${uc_python_cmd} ${pw_job_dir}/utils/get_balance.py --customer_name=${customer_name} --customer_org_id=${customer_org_id} --customer_org_name=${customer_org_name} > balance.json 2>write_balance.log
         
         ssh_exit_code=$?
         

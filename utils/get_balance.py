@@ -50,9 +50,10 @@ def get_balance(group_names, res):
     print(json.dumps(balance), flush = True)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Process customer_name and customer_org_id')
+    parser = argparse.ArgumentParser(description='Process customer_name, customer_org_id and customer_org_name')
     parser.add_argument('--customer_name', type=str, help='Name of the customer')
     parser.add_argument('--customer_org_id', type=str, help='Organization ID of the customer')
+    parser.add_argument('--customer_org_name', type=str, help='Organization name of the customer')
     args = parser.parse_args()
     # Customers of the PW managed solution all share the same user account in PW. 
     # Therefore, the customer name is used to identify each customer. 
@@ -62,10 +63,11 @@ if __name__ == '__main__':
     # Org ID obtained from here https://cloud.parallel.works/api/v2/organization
     # Users of the PW managed solution will all be under the same organization
     customer_org_id = args.customer_org_id 
+    customer_org_name = args.customer_org_name 
 
     group_names = [f'{customer_name}-{gt_prod}' for gt_prod in GT_PRODUCTS]
 
-    GT_ORGANIZATION_URL = f'https://{PW_PLATFORM_HOST}/api/v2/organization/teams?organization={customer_org_id}'
+    GT_ORGANIZATION_URL = f'https://{PW_PLATFORM_HOST}/api/organizations/{customer_org_name}/groups?organization={customer_org_id}'
 
     res = requests.get(GT_ORGANIZATION_URL, headers = HEADERS)
     existing_groups = [group['name'] for group in res.json()]
