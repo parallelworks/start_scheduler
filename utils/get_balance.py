@@ -37,12 +37,12 @@ def get_balance(group_names, res):
         if group['name'] in group_names:
             product_name = group['name'].split('-')[-1]
             if 'used' in group['allocations']:
-                allocation_used = group['allocations']['used']['value']
+                allocation_used = group['allocations']['used']
             else:
                 allocation_used = 0
             
             if 'total' in group['allocations']:
-                allocation_total = group['allocations']['total']['value']
+                allocation_total = group['allocations']['total']
             else:
                 allocation_total = 0
             balance[product_name] = allocation_total-allocation_used 
