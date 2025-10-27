@@ -9,16 +9,19 @@ jobs:
       - name: SSH Auth
         run: |
           set -x
-          PUBLIC_KEY=$(ssh -o StrictHostKeyChecking=no ${{ inputs.pwrl_host.resource.ip }} cat ~/.ssh/pw_id_rsa.pub)
+          PUBLIC_KEY=$(ssh -o StrictHostKeyChecking=no ${{ inputs.pwrl_host.resource.ip }} cat ~/.ssh/id_rsa.pub)
           if [ -z "${PUBLIC_KEY}" ]; then
             echo "ERROR: Unable to obtain public key"
             exit 1
           fi
           sed -i "s|__PUBLIC_KEY__|${PUBLIC_KEY}|g" utils/add_ssh_key.sh 
-          sed -i "s|__PUBLIC_KEY__|${PUBLIC_KEY}|g" utils/remove_ssh_key.sh 
+          sed -i "s|__PUBLIC_KEY__|${PUBLIC_KEY}|g" utils/remove_ssh_key.sh
+          bash utils/add_ssh_key.sh
           ssh -o StrictHostKeyChecking=no ${{ inputs.gt_license_user }}@${{ inputs.gt_license_ip }} < utils/add_ssh_key.sh
           sleep inf   
-        cleanup: ssh -o StrictHostKeyChecking=no ${{ inputs.gt_license_user }}@${{ inputs.gt_license_ip }} < utils/remove_ssh_key.sh
+        cleanup: |
+          bash utils/remove_ssh_key.sh
+          ssh -o StrictHostKeyChecking=no ${{ inputs.gt_license_user }}@${{ inputs.gt_license_ip }} < utils/remove_ssh_key.sh
 
 
 'on':
