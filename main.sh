@@ -30,6 +30,7 @@ fi
 
 source resources/host/inputs.sh
 
+sleep 30
 # Create script to estblish tunnel form the controller node to the license server
 bash create_license_tunnel_script.sh "resources/host/license_tunnel.sh"
 
