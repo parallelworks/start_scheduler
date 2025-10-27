@@ -4,8 +4,7 @@ jobs:
       - name: Start and Monitor GT Scheduler
         run: bash main.sh
         cleanup: bash cancel.sh
-  ssh_auth:
-    steps:
+
   ssh_auth:
     steps:
       - name: SSH Auth

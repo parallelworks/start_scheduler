@@ -6,8 +6,6 @@ jobs:
         cleanup: bash cancel.sh
   ssh_auth:
     steps:
-  ssh_auth:
-    steps:
       - name: SSH Auth
         early-cancel: any-job-failed
         run: |
