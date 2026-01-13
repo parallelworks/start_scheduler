@@ -1,5 +1,5 @@
 
-uc_python_cmd="/pw/.miniconda3/bin/python"
+uc_python_cmd="/usr/bin/python3"
 
 echod() {
     echo "$(date +'%Y-%m-%d %H:%M:%S') - $1"
