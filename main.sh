@@ -1,6 +1,6 @@
 #!/bin/bash
 source inputs.sh
-ssh-keygen -R ${pwrl_host_resource_publicIp}
+ssh-keygen -R ${pwrl_host_resource_ip}
 
 if [ -z "${workflow_utils_branch}" ]; then
     # If empty, clone the main default branch
@@ -19,10 +19,8 @@ source utils/workflow-libs.sh
 # Processing resource inputs
 source /etc/profile.d/parallelworks.sh
 source /etc/profile.d/parallelworks-env.sh
-source /pw/.miniconda3/etc/profile.d/conda.sh
-conda activate
 
-python utils/input_form_resource_wrapper.py
+python3 utils/input_form_resource_wrapper.py
 
 if ! [ -f "resources/host/inputs.sh" ]; then
     displayErrorMessage "ERROR - Missing file ./resources/host/inputs.sh. Resource wrapper failed"
