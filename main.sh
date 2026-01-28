@@ -2,6 +2,20 @@
 source inputs.sh
 ssh-keygen -R ${pwrl_host_resource_ip}
 
+
+rm -f ${HOME}/.ssh/config
+cat >> ${HOME}/.ssh/config <<HERE
+Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile=/dev/null
+Host usercontainer
+    IdentityFile /home/${PW_USER}/.ssh/pw_id_rsa
+    HostName localhost
+    User ${PW_USER}
+    Port 2222
+HERE
+
+
 if [ -z "${workflow_utils_branch}" ]; then
     # If empty, clone the main default branch
     git clone https://github.com/parallelworks/workflow-utils.git
