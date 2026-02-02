@@ -1,6 +1,18 @@
 #!/bin/bash
 tunnel_script=$1
 
+rm -f ${HOME}/.ssh/config
+cat >> ${HOME}/.ssh/config <<HERE
+Host *
+    StrictHostKeyChecking no
+    UserKnownHostsFile=/dev/null
+Host usercontainer
+    IdentityFile /home/${PW_USER}/.ssh/pw_id_rsa
+    HostName localhost
+    User ${PW_USER}
+    Port 2222
+HERE
+
 source resources/host/inputs.sh
 
 echo '#!/bin/bash' > ${tunnel_script}
