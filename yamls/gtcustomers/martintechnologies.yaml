@@ -45,13 +45,13 @@ jobs:
       gt_license_port:
         label: License server port
         type: number
-        default: 27044
+        default: 27054
         tooltip: License port
         hidden: true
       gt_license_vendor_port:
         label: License server vendor port
         type: number
-        default: 27824
+        default: 27834
         tooltip: License vendor port
         hidden: true
       customer_org_id:
