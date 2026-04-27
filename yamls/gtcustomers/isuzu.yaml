@@ -84,20 +84,16 @@ jobs:
           version:
             label: Select GT Version
             type: dropdown
-            default: v2025
+            default: v2026
             options:
+              - value: v2026
+                label: v2026
               - value: v2025
                 label: v2025
               - value: v2024
                 label: v2024
               - value: v2023
                 label: v2023
-              - value: v2022
-                label: v2022
-              - value: v2021
-                label: v2021
-              - value: v2020
-                label: v2020
       adv_gt:
         type: group
         label: Advanced GT Inputs
