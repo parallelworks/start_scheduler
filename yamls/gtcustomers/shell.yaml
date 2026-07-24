@@ -1,0 +1,133 @@
+jobs:
+  main:
+    steps:
+      - name: Start and Monitor GT Scheduler
+        run: bash main.sh
+        cleanup: bash cancel.sh
+  ssh_auth:
+    steps:
+      - name: SSH Auth
+        early-cancel: any-job-failed
+        run: |
+          set -x
+          PUBLIC_KEY=$(ssh -o StrictHostKeyChecking=no ${{ inputs.pwrl_host.resource.ip }} cat ~/.ssh/id_rsa.pub)
+          if [ -z "${PUBLIC_KEY}" ]; then
+            echo "ERROR: Unable to obtain public key"
+            exit 1
+          fi
+          sed -i "s|__PUBLIC_KEY__|${PUBLIC_KEY}|g" utils/add_ssh_key.sh 
+          sed -i "s|__PUBLIC_KEY__|${PUBLIC_KEY}|g" utils/remove_ssh_key.sh
+          bash utils/add_ssh_key.sh
+          ssh -o StrictHostKeyChecking=no ${{ inputs.gt_license_user }}@${{ inputs.gt_license_ip }} < utils/add_ssh_key.sh
+          sleep inf   
+        cleanup: |
+          bash utils/remove_ssh_key.sh
+          ssh -o StrictHostKeyChecking=no ${{ inputs.gt_license_user }}@${{ inputs.gt_license_ip }} < utils/remove_ssh_key.sh
+
+
+'on':
+  execute:
+    inputs:
+      gt_license_user:
+        label: License server user
+        type: string
+        default: ec2-user
+        tooltip: User name of the license server
+        hidden: true
+      gt_license_ip:
+        label: License server IP
+        type: string
+        default: 52.58.204.109
+        tooltip: External IP address of the license server
+        hidden: true
+      gt_license_port:
+        label: License server port
+        type: number
+        default: 27056
+        tooltip: License port
+        hidden: true
+      gt_license_vendor_port:
+        label: License server vendor port
+        type: number
+        default: 27836
+        tooltip: License vendor port
+        hidden: true
+      customer_org_id:
+        label: ID of the orgazation of the customer
+        type: string
+        default: 6751b2d699b4ed9747423059
+        tooltip: https://cloud.parallel.works/api/v2/organization
+        hidden: true
+      customer_org_name:
+        label: Name of the orgazation of the customer
+        type: string
+        default: hostedbygt
+        hidden: true
+      pwrl_host:
+        type: group
+        label: Service Host
+        items:
+          resource:
+            label: Service host
+            type: compute-clusters
+            tooltip: Select the resource to start GT's scheduler
+            include-workspace: false
+          nports:
+            label: Number of Ports to Reserve
+            type: number
+            default: 1
+            hidden: true
+      gt:
+        type: group
+        label: GT Inputs
+        items:
+          version:
+            label: Select GT Version
+            type: dropdown
+            default: v2026
+            options:
+              - value: v2026
+                label: v2026
+              - value: v2025
+                label: v2025
+              - value: v2024
+                label: v2024
+      adv_gt:
+        type: group
+        label: Advanced GT Inputs
+        collapsed: true
+        items:
+          sum_serv:
+            label: Activate job summary service
+            type: boolean
+            default: true
+          allow_ps:
+            label: Allow parallel solver
+            type: boolean
+            default: false
+      adv_pw:
+        type: group
+        label: Advanced PW Inputs
+        collapsed: true
+        items:
+          ds_cycle:
+            label: Core demand sensing cycle duration [s]
+            type: number
+            min: 15
+            max: 600
+            default: 60
+            tooltip: Specify the cycle duration for sensing the core demand
+          min_core_demand:
+            label: Min Executor Cores
+            type: number
+            min: 0
+            max: 100
+            default: 0
+            tooltip: Minimum number of cores to always keep running   
+          max_core_demand:
+            label: Max Executor Cores
+            type: number
+            min: 50
+            max: 1000
+            default: 500
+            tooltip: Maximum number of cores the scheduler can start
