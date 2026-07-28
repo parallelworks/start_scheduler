@@ -103,5 +103,8 @@ if __name__ == '__main__':
     # to prevent the workflow from submitting additional jobs
     if all(value == 0 for value in balance.values()):
         create_inhibit_jobs_file()
+    elif os.path.isfile("INHIBIT_JOBS"):
+        # Balance was restored; remove the flag so job submission resumes
+        os.remove("INHIBIT_JOBS")
 
     check_balance(balance, sched_prop_file)
