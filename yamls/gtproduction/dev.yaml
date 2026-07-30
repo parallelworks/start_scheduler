@@ -1,11 +1,22 @@
 jobs:
+  github_checkout:
+    steps:
+      - name: Checkout
+        uses: parallelworks/checkout
+        with:
+          repo: git@github.com:parallelworks/start_scheduler.git
+          branch: cloud-v3
   main:
+    needs:
+      - github_checkout
     steps:
       - name: Start and Monitor GT Scheduler
         run: bash main.sh
         cleanup: bash cancel.sh
 
   ssh_auth:
+    needs:
+      - github_checkout
     steps:
       - name: SSH Auth
         early-cancel: any-job-failed
