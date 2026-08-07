@@ -373,10 +373,10 @@ write_balance() {
 
 
 write_node_info() {
-    ssh ${resource_ssh_usercontainer_options} usercontainer ${uc_python_cmd} ${pw_job_dir}/utils/get_node_info.py --resource_name=${resource_name} --resource_namespace=${resource_namespace} > node_info.json 2>/dev/null
+    ssh ${resource_ssh_usercontainer_options} usercontainer ${uc_python_cmd} ${pw_job_dir}/utils/get_node_info.py --resource_name=${resource_name} --resource_namespace=${resource_namespace} --org_name=${customer_org_name} > node_info.json 2>write_node_info.log
 
     ssh_exit_code=$?
-        
+
     # Check if the SSH command succeeded
     if [ $ssh_exit_code -eq 0 ]; then
         # Check if the node_info.json file is valid
@@ -384,12 +384,17 @@ write_node_info() {
             return 0  # Exit the function successfully
         fi
     fi
-    
+
     echod "ERROR: File node_info.json is missing or empty."
+    cat write_node_info.log
     rm -rf node_info.json
 }
 
 cancel_failed_jobs_and_rotate_failed_partitions() {
+    # Without node information the node status of the jobs cannot be checked
+    if ! [ -s "node_info.json" ]; then
+        return 0
+    fi
     rm -f rotating_partitions
     touch rotating_partitions  # Ensure the file exists
     # Loop over all jobs and get their compute node and partition
