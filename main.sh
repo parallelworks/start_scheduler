@@ -12,7 +12,8 @@ else
 fi
 
 rm workflow-utils/stream.sh
-mv workflow-utils/* utils/
+# -n so the workflow-utils copies do not overwrite this repo's own utils (e.g. get_node_info.py)
+mv -n workflow-utils/* utils/
 rm -rf workflow-utils
 
 source utils/workflow-libs.sh
