@@ -68,14 +68,19 @@ if [[ ! -f "${template_sched_prop_file}" ]]; then
 fi
 cp ${template_sched_prop_file} ${sched_prop_file}
 sed -i "s|^GTDistributed.work-dir.*|GTDistributed.work-dir = ${sched_work_dir}/gtdistd|g" ${sched_prop_file}
-if [[ ${adv_gt_sum_serv} == "True" ]]; then
+if [[ ${adv_gt_sum_serv,,} == "true" ]]; then
     echod Activating summary service
     sed -i "s|GTDistributed.job-summary-service-enable.*|GTDistributed.job-summary-service-enable = true|g" ${sched_prop_file}
 fi
 
-if [[ ${adv_gt_allow_ps} == "True" ]]; then
+if [[ ${adv_gt_allow_ps,,} == "true" ]]; then
     echod "Enabling parallel solver"
-    sed -i "s|GTDistributed.scheduler.max-parallel-cores-per-solver.*||g" ${sched_prop_file}
+    if [[ -n "${adv_gt_max_parallel_cores_per_solver}" ]]; then
+        echod "Setting max-parallel-cores-per-solver to ${adv_gt_max_parallel_cores_per_solver}"
+        sed -i "s|^GTDistributed.scheduler.max-parallel-cores-per-solver.*|GTDistributed.scheduler.max-parallel-cores-per-solver = ${adv_gt_max_parallel_cores_per_solver}|g" ${sched_prop_file}
+    else
+        sed -i "s|GTDistributed.scheduler.max-parallel-cores-per-solver.*||g" ${sched_prop_file}
+    fi
     sed -i "s|GTDistributed.scheduler.validation.max-parallel-cores-per-solver.*||g" ${sched_prop_file}
 fi
 

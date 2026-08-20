@@ -123,6 +123,14 @@ jobs:
             label: Allow parallel solver
             type: boolean
             default: false
+          max_parallel_cores_per_solver:
+            label: Max parallel cores per solver
+            type: number
+            min: 2
+            default: 2
+            tooltip: Sets GTDistributed.scheduler.max-parallel-cores-per-solver in the scheduler properties file
+            hidden: ${{ !inputs.adv_gt.allow_ps }}
+            ignore: ${{ .hidden }}
       adv_pw:
         type: group
         label: Advanced PW Inputs
