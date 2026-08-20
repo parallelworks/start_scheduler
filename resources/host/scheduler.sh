@@ -75,7 +75,12 @@ fi
 
 if [[ ${adv_gt_allow_ps} == "True" ]]; then
     echod "Enabling parallel solver"
-    sed -i "s|GTDistributed.scheduler.max-parallel-cores-per-solver.*||g" ${sched_prop_file}
+    if [[ -n "${adv_gt_max_parallel_cores_per_solver}" ]]; then
+        echod "Setting max-parallel-cores-per-solver to ${adv_gt_max_parallel_cores_per_solver}"
+        sed -i "s|^GTDistributed.scheduler.max-parallel-cores-per-solver.*|GTDistributed.scheduler.max-parallel-cores-per-solver = ${adv_gt_max_parallel_cores_per_solver}|g" ${sched_prop_file}
+    else
+        sed -i "s|GTDistributed.scheduler.max-parallel-cores-per-solver.*||g" ${sched_prop_file}
+    fi
     sed -i "s|GTDistributed.scheduler.validation.max-parallel-cores-per-solver.*||g" ${sched_prop_file}
 fi
 
