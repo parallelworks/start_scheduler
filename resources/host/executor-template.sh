@@ -24,10 +24,14 @@ GT_VERSION_HOME=${GTIHOME}/${gt_version}
 
 # ONLY IN THE EXECUTOR.sh
 # add a host pointer to internal IP of the scheduler
-cat /etc/hosts > hosts_mod
-sed -i "s|.*${gt_license_hostname}.*||g" hosts_mod
-echo "${resource_privateIp} ${gt_license_hostname}" >> hosts_mod
-sudo cp hosts_mod /etc/hosts
+# Only edit /etc/hosts if a license hostname is defined. With an empty
+# gt_license_hostname the sed below would blank out every line of the file!
+if [ -n "${gt_license_hostname}" ]; then
+    cat /etc/hosts > hosts_mod
+    sed -i "s|.*${gt_license_hostname}.*||g" hosts_mod
+    echo "${scheduler_internal_ip} ${gt_license_hostname}" >> hosts_mod
+    sudo cp hosts_mod /etc/hosts
+fi
 
 
 # Start or restart gtdist daemon
@@ -69,11 +73,20 @@ configure_daemon_systemd() {
     echo Configuring daemon
     local prop_file=$1
     # Following instructions in section 5b of /opt/gtsuite/v2020/distributed/bin/README_Linux.md
-    sudo cp ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service /etc/systemd/system/
-    sudo cp -r ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service.d /etc/systemd/system/
+    # Stage the unit files as the regular user first: /software may be NFS-mounted
+    # with root_squash on compute nodes, so root cannot read it there (sudo cp
+    # straight from ${GTIHOME} fails with 'Permission denied')
+    unit_files_src=${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files
+    unit_files_tmp=$(mktemp -d)
+    cp ${unit_files_src}/gtdistd.service ${unit_files_tmp}/
+    cp -r ${unit_files_src}/gtdistd.service.d ${unit_files_tmp}/
+    chmod 644 ${unit_files_tmp}/gtdistd.service ${unit_files_tmp}/gtdistd.service.d/override.conf
+    sudo cp ${unit_files_tmp}/gtdistd.service /etc/systemd/system/
+    sudo cp -r ${unit_files_tmp}/gtdistd.service.d /etc/systemd/system/
     sudo mkdir -p /etc/systemd/system/gtdistd.service.d/
     conf_file=/etc/systemd/system/gtdistd.service.d/override.conf
-    sudo cp ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service.d/override.conf ${conf_file}
+    sudo cp ${unit_files_tmp}/gtdistd.service.d/override.conf ${conf_file}
+    rm -rf ${unit_files_tmp}
     sudo sed -i "s|/opt/gtsuite/v|${GTIHOME}/v|g" ${conf_file}
     sudo sed -i "s|User=.*|User=${USER}|g" ${conf_file}
     sudo sed -i "s|Environment=GTIHOME=.*|Environment=GTIHOME=${GTIHOME}|g" ${conf_file}

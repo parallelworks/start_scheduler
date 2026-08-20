@@ -303,11 +303,20 @@ configure_daemon_systemd() {
     fi
 
     # Following instructions in section 5b of /opt/gtsuite/v2020/distributed/bin/README_Linux.md
-    sudo cp ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service /etc/systemd/system/
-    sudo cp -r ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service.d /etc/systemd/system/
+    # Stage the unit files as the regular user first: /software may be NFS-mounted
+    # with root_squash on compute nodes, so root cannot read it there (sudo cp
+    # straight from ${GTIHOME} fails with 'Permission denied')
+    unit_files_src=${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files
+    unit_files_tmp=$(mktemp -d)
+    cp ${unit_files_src}/gtdistd.service ${unit_files_tmp}/
+    cp -r ${unit_files_src}/gtdistd.service.d ${unit_files_tmp}/
+    chmod 644 ${unit_files_tmp}/gtdistd.service ${unit_files_tmp}/gtdistd.service.d/override.conf
+    sudo cp ${unit_files_tmp}/gtdistd.service /etc/systemd/system/
+    sudo cp -r ${unit_files_tmp}/gtdistd.service.d /etc/systemd/system/
     sudo mkdir -p /etc/systemd/system/gtdistd.service.d/
     conf_file=/etc/systemd/system/gtdistd.service.d/override.conf
-    sudo cp ${GTIHOME}/${dversion}/distributed/bin/systemd-unit-files/gtdistd.service.d/override.conf ${conf_file}
+    sudo cp ${unit_files_tmp}/gtdistd.service.d/override.conf ${conf_file}
+    rm -rf ${unit_files_tmp}
     sudo sed -i "s|/opt/gtsuite/v|${GTIHOME}/v|g" ${conf_file}
     sudo sed -i "s|User=.*|User=${USER}|g" ${conf_file}
     sudo sed -i "s|Environment=GTIHOME=.*|Environment=GTIHOME=${GTIHOME}|g" ${conf_file}
