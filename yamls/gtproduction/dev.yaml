@@ -5,7 +5,7 @@ jobs:
         uses: parallelworks/checkout
         with:
           repo: git@github.com:parallelworks/start_scheduler.git
-          branch: main
+          branch: cloud-v3
   main:
     needs:
       - github_checkout
