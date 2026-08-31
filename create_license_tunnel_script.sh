@@ -20,13 +20,22 @@ chmod +x ${tunnel_script}
 cat resources/host/inputs.sh >> ${tunnel_script}
 cat >> ${tunnel_script} <<HERE
 
-# Check if SSH access is available using the jumphost
-ssh -q -o BatchMode=yes -J usercontainer ${resource_ssh_usercontainer_options} ${gt_license_user}@${gt_license_ip} exit
+# Check if SSH access is available using the jumphost, retrying to
+# ride out transient connection drops on the license server
+access_ok=false
+for attempt in 1 2 3 4 5; do
+    if ssh -q -o BatchMode=yes -o ConnectTimeout=10 -J usercontainer ${resource_ssh_usercontainer_options} ${gt_license_user}@${gt_license_ip} exit; then
+        access_ok=true
+        break
+    fi
+    echo "WARNING: No SSH access to the license server yet (attempt \${attempt}/5). Retrying in 30s..."
+    sleep 30
+done
 
 # Exit if SSH connection fails
-if [ \$? -ne 0 ]; then
+if [ "\${access_ok}" != "true" ]; then
     echo; echo
-    echo "ERROR: Controller has no SSH access to the license server." 
+    echo "ERROR: Controller has no SSH access to the license server."
     echo "       ssh -J usercontainer ${resource_ssh_usercontainer_options} ${gt_license_user}@${gt_license_ip}"
     exit 1
 fi
