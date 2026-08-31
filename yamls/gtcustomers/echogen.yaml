@@ -11,6 +11,7 @@ jobs:
       - github_checkout
     steps:
       - name: Start and Monitor GT Scheduler
+        early-cancel: any-job-failed
         run: bash main.sh
         cleanup: bash cancel.sh
   ssh_auth:
@@ -21,32 +22,53 @@ jobs:
         early-cancel: any-job-failed
         run: |
           set -x
-          PUBLIC_KEY=$(ssh -o StrictHostKeyChecking=no ${{ inputs.pwrl_host.resource.ip }} cat ~/.ssh/id_rsa.pub)
+          # The controller key may not exist yet right after the cluster starts: retry
+          for attempt in 1 2 3 4 5; do
+            PUBLIC_KEY=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ inputs.pwrl_host.resource.ip }} cat ~/.ssh/id_rsa.pub) && break
+            echo "WARNING: Unable to obtain public key (attempt ${attempt}/5). Retrying in 15s..."
+            sleep 15
+          done
           if [ -z "${PUBLIC_KEY}" ]; then
             echo "ERROR: Unable to obtain public key"
             exit 1
           fi
-          sed -i "s|__PUBLIC_KEY__|${PUBLIC_KEY}|g" utils/add_ssh_key.sh 
+          sed -i "s|__PUBLIC_KEY__|${PUBLIC_KEY}|g" utils/add_ssh_key.sh
           sed -i "s|__PUBLIC_KEY__|${PUBLIC_KEY}|g" utils/remove_ssh_key.sh
           bash utils/add_ssh_key.sh
+          # The license server occasionally drops connections: retry and fail loudly,
+          # because the license tunnel cannot work without this key in place
+          installed=false
           for attempt in 1 2 3 4 5 6 7 8 9 10; do
             if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 ${{ inputs.gt_license_user }}@${{ inputs.gt_license_ip }} < utils/add_ssh_key.sh; then
-              key_added=true
+              installed=true
               break
             fi
-            echo "WARNING: Could not add the public key to the license server (attempt ${attempt} of 10). Retrying in 30 seconds..."
+            echo "WARNING: Failed to install public key on the license server (attempt ${attempt}/10). Retrying in 30s..."
             sleep 30
           done
-          if [ "${key_added}" != "true" ]; then
-            echo "ERROR: Unable to add the public key to the license server"
+          if [ "${installed}" != "true" ]; then
+            echo "ERROR: Unable to install public key on license server ${{ inputs.gt_license_user }}@${{ inputs.gt_license_ip }}"
             exit 1
           fi
-          sleep inf   
+          # Signals the main job that the license server is ready for the tunnel
+          touch ssh_auth_key_installed
+          sleep inf
         cleanup: |
+          rm -f ssh_auth_key_installed
           bash utils/remove_ssh_key.sh
-          ssh -o StrictHostKeyChecking=no ${{ inputs.gt_license_user }}@${{ inputs.gt_license_ip }} < utils/remove_ssh_key.sh
-
-
+          removed=false
+          for attempt in 1 2 3; do
+            if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 ${{ inputs.gt_license_user }}@${{ inputs.gt_license_ip }} < utils/remove_ssh_key.sh; then
+              removed=true
+              break
+            fi
+            echo "WARNING: Failed to remove public key from the license server (attempt ${attempt}/3). Retrying in 15s..."
+            sleep 15
+          done
+          if [ "${removed}" != "true" ]; then
+            echo "ERROR: Unable to remove public key from license server ${{ inputs.gt_license_user }}@${{ inputs.gt_license_ip }}"
+            exit 1
+          fi
 
 'on':
   execute:
