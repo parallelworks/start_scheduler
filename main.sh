@@ -105,6 +105,18 @@ fi
 
 echo "Start Scheduler Submitted"
 
+# Stream the scheduler's log into this step's log. The controller used to push it into
+# the step's logs.out through the reverse tunnel (stream.sh), but the step logs no
+# longer live under the job directory, so tail it from here instead
+scheduler_log="${resource_jobdir}/${resource_label}/logs.out"
+stream_scheduler_log() {
+    # $1: how much of the file to print first (+1: all of it, 0: only new lines)
+    ssh -o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=3 ${resource_publicIp} "tail -n $1 -F ${scheduler_log}"
+}
+stream_scheduler_log +1 &
+stream_pid=$!
+trap 'kill ${stream_pid} 2>/dev/null' EXIT
+
 # Preparing service.json to connect to webapp
 #sed -i "s|.*PORT.*|    \"PORT\": \"${resource_ports}\",|" service.json
 
@@ -133,6 +145,12 @@ while true; do
     if [ "$retry_count" -ge "$max_retries" ]; then
         echo "$(date) Maximum retries reached, exiting." 2>&1 | tee -a screen-session.log
         break
+    fi
+
+    # Restart the log stream if its ssh connection dropped
+    if ! kill -0 ${stream_pid} 2>/dev/null; then
+        stream_scheduler_log 0 &
+        stream_pid=$!
     fi
 
     sleep 90

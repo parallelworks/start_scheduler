@@ -1,3 +1,8 @@
+# utils/input_form_resource_wrapper.py runs pw cluster ls from the main job: without this
+# permission the run's token can only update its own sessions and the command fails
+permissions:
+  - '*'
+
 jobs:
   github_checkout:
     steps:
@@ -10,6 +15,50 @@ jobs:
     needs:
       - github_checkout
     steps:
+      - name: Create Inputs
+        run: |
+          # The platform no longer writes inputs.json and inputs.sh into the job directory,
+          # and main.sh plus utils/input_form_resource_wrapper.py read every form value
+          # from them: recreate inputs.json from the form inputs in the layout the
+          # wrapper expects, then derive inputs.sh from it
+          cat <<'EOF' > inputs.json
+          {
+            "gt_license_user": "${{ inputs.gt_license_user }}",
+            "gt_license_ip": "${{ inputs.gt_license_ip }}",
+            "gt_license_port": ${{ inputs.gt_license_port }},
+            "gt_license_vendor_port": ${{ inputs.gt_license_vendor_port }},
+            "customer_org_id": "${{ inputs.customer_org_id }}",
+            "customer_org_name": "${{ inputs.customer_org_name }}",
+            "pwrl_host": {
+              "resource": {
+                "id": "${{ inputs.pwrl_host.resource.id }}",
+                "ip": "${{ inputs.pwrl_host.resource.ip }}",
+                "name": "${{ inputs.pwrl_host.resource.name }}",
+                "namespace": "${{ inputs.pwrl_host.resource.namespace }}",
+                "provider": "${{ inputs.pwrl_host.resource.provider }}",
+                "publicIp": "${{ inputs.pwrl_host.resource.ip }}",
+                "schedulerType": "${{ inputs.pwrl_host.resource.schedulerType }}",
+                "type": "${{ inputs.pwrl_host.resource.type }}",
+                "uri": "${{ inputs.pwrl_host.resource.uri }}",
+                "user": "${{ inputs.pwrl_host.resource.user }}"
+              },
+              "nports": ${{ inputs.pwrl_host.nports }}
+            },
+            "gt": {
+              "version": "${{ inputs.gt.version }}"
+            },
+            "adv_gt": {
+              "sum_serv": ${{ inputs.adv_gt.sum_serv }},
+              "allow_ps": ${{ inputs.adv_gt.allow_ps }}
+            },
+            "adv_pw": {
+              "ds_cycle": ${{ inputs.adv_pw.ds_cycle }},
+              "min_core_demand": ${{ inputs.adv_pw.min_core_demand }},
+              "max_core_demand": ${{ inputs.adv_pw.max_core_demand }}
+            }
+          }
+          EOF
+          python3 utils/write_inputs_sh.py
       - name: Start and Monitor GT Scheduler
         early-cancel: any-job-failed
         run: bash main.sh

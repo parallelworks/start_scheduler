@@ -19,29 +19,17 @@ jobs:
         run: |
           # The platform no longer writes inputs.json and inputs.sh into the job directory,
           # and main.sh plus utils/input_form_resource_wrapper.py read every form value
-          # from them: recreate both from the form inputs in the format they expect
+          # from them: recreate inputs.json from the form inputs in the layout the
+          # wrapper expects, then derive inputs.sh from it
           cat <<'EOF' > inputs.json
           {
-            "adv_gt": {
-              "allow_ps": ${{ inputs.adv_gt.allow_ps }},
-              "sum_serv": ${{ inputs.adv_gt.sum_serv }}
-            },
-            "adv_pw": {
-              "ds_cycle": ${{ inputs.adv_pw.ds_cycle }},
-              "max_core_demand": ${{ inputs.adv_pw.max_core_demand }},
-              "min_core_demand": ${{ inputs.adv_pw.min_core_demand }}
-            },
-            "customer_org_id": "${{ inputs.customer_org_id }}",
-            "customer_org_name": "${{ inputs.customer_org_name }}",
-            "gt": {
-              "version": "${{ inputs.gt.version }}"
-            },
+            "gt_license_user": "${{ inputs.gt_license_user }}",
             "gt_license_ip": "${{ inputs.gt_license_ip }}",
             "gt_license_port": ${{ inputs.gt_license_port }},
-            "gt_license_user": "${{ inputs.gt_license_user }}",
             "gt_license_vendor_port": ${{ inputs.gt_license_vendor_port }},
+            "customer_org_id": "${{ inputs.customer_org_id }}",
+            "customer_org_name": "${{ inputs.customer_org_name }}",
             "pwrl_host": {
-              "nports": ${{ inputs.pwrl_host.nports }},
               "resource": {
                 "id": "${{ inputs.pwrl_host.resource.id }}",
                 "ip": "${{ inputs.pwrl_host.resource.ip }}",
@@ -53,36 +41,24 @@ jobs:
                 "type": "${{ inputs.pwrl_host.resource.type }}",
                 "uri": "${{ inputs.pwrl_host.resource.uri }}",
                 "user": "${{ inputs.pwrl_host.resource.user }}"
-              }
+              },
+              "nports": ${{ inputs.pwrl_host.nports }}
+            },
+            "gt": {
+              "version": "${{ inputs.gt.version }}"
+            },
+            "adv_gt": {
+              "sum_serv": ${{ inputs.adv_gt.sum_serv }},
+              "allow_ps": ${{ inputs.adv_gt.allow_ps }}
+            },
+            "adv_pw": {
+              "ds_cycle": ${{ inputs.adv_pw.ds_cycle }},
+              "min_core_demand": ${{ inputs.adv_pw.min_core_demand }},
+              "max_core_demand": ${{ inputs.adv_pw.max_core_demand }}
             }
           }
           EOF
-          # A value the platform did not render leaves invalid JSON: fail here, with the
-          # file in the log, instead of later inside the resource wrapper
-          if ! python3 -m json.tool inputs.json > /dev/null; then
-            echo "ERROR: inputs.json is not valid JSON"
-            cat inputs.json
-            exit 1
-          fi
-          # inputs.sh is inputs.json flattened the way the resource wrapper does it:
-          # nested keys joined with "_" and booleans in lowercase
-          python3 - <<'EOF'
-          import json
-
-          def flatten(values, prefix=''):
-              for key, value in values.items():
-                  if isinstance(value, dict):
-                      yield from flatten(value, f'{prefix}{key}_')
-                  else:
-                      yield f'{prefix}{key}', str(value).lower() if isinstance(value, bool) else value
-
-          with open('inputs.json') as f:
-              inputs = json.load(f)
-          with open('inputs.sh', 'w') as f:
-              for key, value in flatten(inputs):
-                  f.write(f'export {key}="{value}"\n')
-          EOF
-          cat inputs.sh
+          python3 utils/write_inputs_sh.py
       - name: Start and Monitor GT Scheduler
         early-cancel: any-job-failed
         run: bash main.sh
