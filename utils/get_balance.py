@@ -1,25 +1,15 @@
 #!/usr/bin/python3
-import os
-import requests
 import argparse
 import json
-from base64 import b64encode
 
-def encode_string_to_base64(text):
-    # Convert the string to bytes
-    text_bytes = text.encode('utf-8')
-    # Encode the bytes to base64
-    encoded_bytes = b64encode(text_bytes)
-    # Convert the encoded bytes back to a string
-    encoded_string = encoded_bytes.decode('utf-8')
-    return encoded_string
+import pw_api
 
-# This script needs to run in the user container to access the PW_API_KEY
-# Therefore, it is called by the main script using the reverse ssh tunnel
-# Prints the balance in json format
+# This script runs in the user container, called by the scheduler on the controller
+# through the reverse ssh tunnel, and prints the balance in json format. It
+# authenticates through the pw CLI (see pw_api.py). The group listing only carries the
+# allocations for administrators and group members, which the workspace's identity is
+# not, so every matching group is fetched individually: its detail does include them
 
-PW_PLATFORM_HOST = os.environ.get('PW_PLATFORM_HOST')
-HEADERS = {"Authorization": "Basic {}".format(encode_string_to_base64(os.environ['PW_API_KEY']))}
 # FIXME: Get from license server
 GT_PRODUCTS = ['gtlinear', 'gtpowerx', 'gtsuite', 'gtautoliononed', 'gtpowerxrt', 'gtxchem', 'gtfemag', 'gtautothreedflow', 'gtautomation', 'cosimthermal', 'gtadvancedcombustion', 'gtautolionthreed', 'gtjmagmachine', 'gtthreedmbd', 'gtthreedmbdadvancedtribology', 'gtthreedmbdmachinery', 'gtthreedmbdvehicledynamics']
 
@@ -30,21 +20,15 @@ def check_group_existence(group_names, existing_groups):
             raise ValueError(f"Group '{group_name}' not found.")
 
 
-def get_balance(group_names, res):
+def get_balance(group_names, groups):
     balance = {gt_product: 0 for gt_product in GT_PRODUCTS}
 
-    for group in res.json():
+    for group in groups:
         if group['name'] in group_names:
             product_name = group['name'].split('-')[-1]
-            if 'used' in group['allocations']:
-                allocation_used = group['allocations']['used']
-            else:
-                allocation_used = 0
-            
-            if 'total' in group['allocations']:
-                allocation_total = group['allocations']['total']
-            else:
-                allocation_total = 0
+            allocations = group.get('allocations') or {}
+            allocation_used = allocations.get('used') or 0
+            allocation_total = allocations.get('total') or 0
             balance[product_name] = allocation_total-allocation_used 
     
     print(json.dumps(balance), flush = True)
@@ -67,11 +51,14 @@ if __name__ == '__main__':
 
     group_names = [f'{customer_name}-{gt_prod}' for gt_prod in GT_PRODUCTS]
 
-    GT_ORGANIZATION_URL = f'https://{PW_PLATFORM_HOST}/api/organizations/{customer_org_name}/groups?organization={customer_org_id}'
-
-    res = requests.get(GT_ORGANIZATION_URL, headers = HEADERS)
-    existing_groups = [group['name'] for group in res.json()]
+    all_groups = pw_api.get(f'organizations/{customer_org_name}/groups', {'organization': customer_org_id})
+    existing_groups = [group['name'] for group in all_groups]
 
     #check_group_existence(group_names, existing_groups)
 
-    get_balance(group_names, res)
+    groups = [
+        pw_api.get(f'organizations/{customer_org_name}/groups/{group_name}')
+        for group_name in group_names if group_name in existing_groups
+    ]
+
+    get_balance(group_names, groups)

@@ -1,9 +1,5 @@
 #!/bin/bash
 source inputs.sh
-bash stream.sh &
-stream_pid=$!
-echo "kill ${stream_pid} 2>/dev/null" >> cancel.sh
-
 
 # Set the duration for the loop (in seconds)
 duration=$((30 * 60))  # 30 minutes
